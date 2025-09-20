@@ -5,7 +5,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import AuthProvider from "@/components/AuthProvider"; // <-- THIS IS THE NEW LINE
+import AuthProvider from "@/components/AuthProvider"; 
+import Navigation from "@/components/Navigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,11 +31,14 @@ export default function RootLayout({
                 TaskSorter
               </Link>
               <nav>
-                <ul className="flex space-x-4">
-                  <li><Link href="/" className="hover:underline">Home</Link></li>
-                  <li><Link href="/tasks" className="hover:underline">My Tasks</Link></li>
-                  <li><Link href="/login" className="hover:underline">Login</Link></li>
-                </ul>
+                <header className="bg-blue-600 text-white p-4 shadow-md">
+  <div className="container mx-auto flex justify-between items-center">
+    <Link href="/" className="text-xl font-bold">
+      TaskSorter
+    </Link>
+    <Navigation /> {/* <-- REPLACE THE OLD <nav> WITH THIS */}
+  </div>
+</header>
               </nav>
             </div>
           </header>
