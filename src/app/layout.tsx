@@ -1,7 +1,11 @@
+// src/app/layout.tsx
+// This is the main wrapper for every page. We're adding the AuthProvider here.
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import AuthProvider from "@/components/AuthProvider"; // <-- THIS IS THE NEW LINE
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,31 +22,33 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* Simple Header */}
-        <header className="bg-blue-600 text-white p-4 shadow-md">
-          <div className="container mx-auto flex justify-between items-center">
-            <Link href="/" className="text-xl font-bold">
-              TaskSorter
-            </Link>
-            <nav>
-              <ul className="flex space-x-4">
-                <li><Link href="/" className="hover:underline">Home</Link></li>
-                <li><Link href="/tasks" className="hover:underline">My Tasks</Link></li>
-                <li><Link href="/login" className="hover:underline">Login</Link></li>
-              </ul>
-            </nav>
-          </div>
-        </header>
+        <AuthProvider> {/* <-- WE WRAP EVERYTHING IN THIS TAG */}
+          {/* Simple Header */}
+          <header className="bg-blue-600 text-white p-4 shadow-md">
+            <div className="container mx-auto flex justify-between items-center">
+              <Link href="/" className="text-xl font-bold">
+                TaskSorter
+              </Link>
+              <nav>
+                <ul className="flex space-x-4">
+                  <li><Link href="/" className="hover:underline">Home</Link></li>
+                  <li><Link href="/tasks" className="hover:underline">My Tasks</Link></li>
+                  <li><Link href="/login" className="hover:underline">Login</Link></li>
+                </ul>
+              </nav>
+            </div>
+          </header>
 
-        {/* Main Content Area */}
-        <main className="container mx-auto p-4 min-h-screen">
-          {children}
-        </main>
+          {/* Main Content Area */}
+          <main className="container mx-auto p-4 min-h-screen">
+            {children}
+          </main>
 
-        {/* Simple Footer */}
-        <footer className="bg-gray-100 p-4 text-center border-t">
-          <p>&copy; {new Date().getFullYear()} TaskSorter. Built with Next.js and Tailwind CSS.</p>
-        </footer>
+          {/* Simple Footer */}
+          <footer className="bg-gray-100 p-4 text-center border-t">
+            <p>&copy; {new Date().getFullYear()} TaskSorter. Built with Next.js and Tailwind CSS.</p>
+          </footer>
+        </AuthProvider> {/* <-- THIS CLOSES THE TAG */}
       </body>
     </html>
   );
