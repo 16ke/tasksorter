@@ -43,6 +43,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   tasks         Task[]
+  hashedPassword String?
 }
 
 model VerificationToken {
