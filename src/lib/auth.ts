@@ -1,14 +1,12 @@
-// src/lib/auth.ts
+// src/lib/auth.ts - FIXED VERSION
 // This file configures NextAuth to use our database and defines how users can log in.
 
 import { NextAuthOptions } from "next-auth";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -34,8 +32,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // 4. Check if password matches (we'll implement this properly later)
-        // For now, we'll use a simple check
+        // 4. Check if password matches
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.hashedPassword || ""
@@ -59,6 +56,25 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt"
   },
   pages: {
-    signIn: "/login", // This tells NextAuth to use our custom login page
+    signIn: "/login",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  
+  // FIXED CALLBACKS - PROPERLY HANDLE USER ID
+  callbacks: {
+    async jwt({ token, user }) {
+      // Persist the user id to the token right after signin
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Send properties to the client
+      if (session.user && token.id) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
   },
 };
