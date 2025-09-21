@@ -44,6 +44,55 @@ export default function TasksPage() {
     fetchTasks();
   }, []);
 
+  const handleMarkAsDone = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "DONE",
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state to reflect the change
+        setTasks(tasks.map(task => 
+          task.id === taskId ? { ...task, status: "DONE" } : task
+        ));
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || "Failed to mark as done"}`);
+      }
+    } catch (error) {
+      console.error("Error marking task as done:", error);
+      alert("Failed to mark task as done.");
+    }
+  };
+
+  const handleDelete = async (taskId: string) => {
+    if (!confirm("Are you sure you want to delete this task?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setTasks(tasks.filter(task => task.id !== taskId));
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.error || "Failed to delete task"}`);
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      alert("Failed to delete task.");
+    }
+  };
+
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
       const matchesSearch = searchTerm === "" || 
@@ -79,26 +128,10 @@ export default function TasksPage() {
     });
   }, [tasks, searchTerm, statusFilter, sortBy]);
 
-  const handleDelete = async (taskId: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setTasks(tasks.filter(task => task.id !== taskId));
-      } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.error || "Failed to delete task"}`);
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      alert("Failed to delete task.");
-    }
+  // Check if due date is overdue
+  const isOverdue = (dueDate: Date | null) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
   };
 
   if (isLoading) {
@@ -214,16 +247,27 @@ export default function TasksPage() {
 
       {filteredAndSortedTasks.length === 0 ? (
         <div className="text-center py-12">
+          <div className="text-6xl mb-4">📋</div>
           <p className="text-gray-600 text-lg mb-4">
             {tasks.length === 0 ? "You don't have any tasks yet!" : "No tasks match your filters"}
           </p>
-          {tasks.length === 0 && (
+          {tasks.length === 0 ? (
             <Link 
               href="/tasks/new"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-block"
             >
               Create Your First Task
             </Link>
+          ) : (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("");
+              }}
+              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Clear Filters
+            </button>
           )}
         </div>
       ) : (
@@ -260,14 +304,28 @@ export default function TasksPage() {
                     </span>
                     
                     {task.dueDate && (
-                      <span className="text-xs text-gray-500">
-                        📅 Due: {new Date(task.dueDate).toLocaleDateString()}
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isOverdue(task.dueDate) 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        📅 {isOverdue(task.dueDate) ? 'Overdue: ' : 'Due: '}
+                        {new Date(task.dueDate).toLocaleDateString()}
                       </span>
                     )}
                   </div>
                 </div>
                 
                 <div className="flex space-x-2 ml-4">
+                  {task.status !== 'DONE' && (
+                    <button
+                      onClick={() => handleMarkAsDone(task.id)}
+                      className="bg-green-100 text-green-600 px-3 py-1 rounded text-sm hover:bg-green-200 transition-colors"
+                      title="Mark as done"
+                    >
+                      ✅
+                    </button>
+                  )}
                   <button
                     onClick={() => router.push(`/tasks/edit/${task.id}`)}
                     className="bg-blue-100 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-200 transition-colors"
