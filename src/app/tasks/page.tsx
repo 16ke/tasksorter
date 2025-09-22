@@ -128,9 +128,9 @@ export default function TasksPage() {
     });
   }, [tasks, searchTerm, statusFilter, sortBy]);
 
-  // Check if due date is overdue
-  const isOverdue = (dueDate: Date | null) => {
-    if (!dueDate) return false;
+  // Check if due date is overdue (only for non-DONE tasks)
+  const isOverdue = (dueDate: Date | null, status: string) => {
+    if (!dueDate || status === 'DONE') return false; // Don't show overdue for completed tasks
     return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
   };
 
@@ -305,11 +305,11 @@ export default function TasksPage() {
                     
                     {task.dueDate && (
                       <span className={`text-xs px-2 py-1 rounded ${
-                        isOverdue(task.dueDate) 
+                        isOverdue(task.dueDate, task.status) 
                           ? 'bg-red-100 text-red-800' 
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        📅 {isOverdue(task.dueDate) ? 'Overdue: ' : 'Due: '}
+                        📅 {isOverdue(task.dueDate, task.status) ? 'Overdue: ' : 'Due: '}
                         {new Date(task.dueDate).toLocaleDateString()}
                       </span>
                     )}
@@ -320,7 +320,7 @@ export default function TasksPage() {
                   {task.status !== 'DONE' && (
                     <button
                       onClick={() => handleMarkAsDone(task.id)}
-                      className="bg-green-100 text-green-600 px-3 py-1 rounded text-sm hover:bg-green-200 transition-colors"
+                      className="bg-gray-100 text-gray-400 px-3 py-1 rounded text-sm hover:bg-green-100 hover:text-green-600 transition-colors"
                       title="Mark as done"
                     >
                       ✅
