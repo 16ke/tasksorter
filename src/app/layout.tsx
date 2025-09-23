@@ -1,6 +1,4 @@
 // src/app/layout.tsx
-// This layout provides the basic structure for our app
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -24,12 +22,12 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-surface`}>
         <AuthProvider>
           {/* Header only shows when logged in */}
           {session && (
-            <header className="bg-blue-600 text-white p-4 shadow-md">
+            <header className="bg-[var(--turquoise-500)] text-white p-4 shadow-md">
               <div className="container mx-auto flex justify-between items-center">
                 <a href="/" className="text-xl font-bold">
                   TaskSorter
@@ -39,14 +37,14 @@ export default async function RootLayout({
             </header>
           )}
           
-          {/* Main Content */}
-          <main className="container mx-auto p-4 min-h-screen">
+          {/* Main Content - FIXED: Remove container constraints and use full width */}
+          <main className="min-h-screen">
             {children}
           </main>
 
-          {/* Footer only shows when logged in */}
+          {/* Footer only shows when logged in - Updated for dark mode */}
           {session && (
-            <footer className="bg-gray-100 p-4 text-center border-t">
+            <footer className="bg-gray-100 p-4 text-center border-t dark:bg-gray-800 dark:text-white dark:border-gray-700">
               <p>&copy; {new Date().getFullYear()} TaskSorter. Built with Next.js and Tailwind CSS.</p>
             </footer>
           )}

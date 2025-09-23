@@ -64,98 +64,100 @@ export default function NewTaskPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Link href="/tasks" className="text-blue-600 hover:underline transition-colors">
-          &larr; Back to Tasks
-        </Link>
-        <h1 className="text-3xl font-bold mt-2">Create New Task</h1>
+    <div className="min-h-screen py-8">
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="mb-6">
+          <Link href="/tasks" className="text-[var(--turquoise-600)] hover:underline transition-colors">
+            &larr; Back to Tasks
+          </Link>
+          <h1 className="text-3xl font-bold mt-2 text-foreground">Create New Task</h1>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 bg-card p-6 rounded-lg shadow-md border-theme">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-foreground">
+              Title *
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border-theme rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-colors bg-card text-foreground"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-foreground">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="mt-1 block w-full px-3 py-2 border-theme rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-colors bg-card text-foreground"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-foreground">
+                Status
+              </label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border-theme rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-colors bg-card text-foreground"
+              >
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="DONE">Done</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="priority" className="block text-sm font-medium text-foreground">
+                Priority
+              </label>
+              <select
+                id="priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border-theme rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-colors bg-card text-foreground"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="dueDate" className="block text-sm font-medium text-foreground">
+              Due Date
+            </label>
+            <input
+              type="date"
+              id="dueDate"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border-theme rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-colors bg-card text-foreground"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-[var(--turquoise-500)] text-white py-2 px-4 rounded-md hover:bg-[var(--turquoise-600)] focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:ring-offset-2 disabled:opacity-50 transition-colors"
+          >
+            {isLoading ? "Creating Task..." : "Create Task"}
+          </button>
+        </form>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-            Title *
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            >
-              <option value="TODO">To Do</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="DONE">Done</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700">
-              Priority
-            </label>
-            <select
-              id="priority"
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="URGENT">Urgent</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
-            Due Date
-          </label>
-          <input
-            type="date"
-            id="dueDate"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
-        >
-          {isLoading ? "Creating Task..." : "Create Task"}
-        </button>
-      </form>
     </div>
   );
 }

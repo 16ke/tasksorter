@@ -1,6 +1,4 @@
 // src/app/tasks/page.tsx
-// This page shows the user's actual tasks from the database with search, filters, and edit/delete buttons.
-
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -57,7 +55,6 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
-        // Update local state to reflect the change
         setTasks(tasks.map(task => 
           task.id === taskId ? { ...task, status: "DONE" } : task
         ));
@@ -99,7 +96,6 @@ export default function TasksPage() {
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      // Enhanced status filtering with "ACTIVE" option
       let matchesStatus = true;
       if (statusFilter === "ACTIVE") {
         matchesStatus = task.status === "TODO" || task.status === "IN_PROGRESS";
@@ -110,7 +106,6 @@ export default function TasksPage() {
       return matchesSearch && matchesStatus;
     });
 
-    // Sorting logic
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "oldest":
@@ -128,19 +123,18 @@ export default function TasksPage() {
     });
   }, [tasks, searchTerm, statusFilter, sortBy]);
 
-  // Check if due date is overdue (only for non-DONE tasks)
   const isOverdue = (dueDate: Date | null, status: string) => {
-    if (!dueDate || status === 'DONE') return false; // Don't show overdue for completed tasks
+    if (!dueDate || status === 'DONE') return false;
     return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="min-h-screen p-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent">
                 My Tasks
               </h1>
             </div>
@@ -149,10 +143,9 @@ export default function TasksPage() {
             </div>
           </div>
           
-          {/* Loading Skeletons */}
           <div className="grid gap-6">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white p-6 rounded-xl shadow-lg animate-pulse">
+              <div key={n} className="bg-card p-6 rounded-xl shadow-lg animate-pulse border-theme">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="h-7 bg-gray-200 rounded w-3/4 mb-3"></div>
@@ -177,23 +170,23 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent">
               My Tasks
             </h1>
-            <p className="text-gray-600 mt-2">Manage your tasks efficiently</p>
+            <p className="text-muted mt-2">Manage your tasks efficiently</p>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+            <span className="bg-gradient-to-r from-[var(--turquoise-500)] to-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
               {filteredAndSortedTasks.length} task{filteredAndSortedTasks.length !== 1 ? 's' : ''}
             </span>
             <Link 
               href="/tasks/new"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
+              className="bg-gradient-to-r from-[var(--turquoise-600)] to-purple-600 text-white px-6 py-3 rounded-full hover:from-[var(--turquoise-700)] hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
             >
               + New Task
             </Link>
@@ -201,11 +194,11 @@ export default function TasksPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-100">
+        <div className="bg-card p-6 rounded-xl shadow-lg mb-8 border-theme">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Search Input */}
             <div className="lg:col-span-2">
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="search" className="block text-sm font-medium text-foreground mb-2">
                 🔍 Search Tasks
               </label>
               <div className="relative">
@@ -215,9 +208,9 @@ export default function TasksPage() {
                   placeholder="Search by title or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-3 pl-11 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 pl-11 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 bg-card text-foreground"
                 />
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -228,14 +221,14 @@ export default function TasksPage() {
             <div className="grid grid-cols-2 gap-4">
               {/* Status Filter */}
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="status" className="block text-sm font-medium text-foreground mb-2">
                   📊 Status
                 </label>
                 <select
                   id="status"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                  className="w-full px-4 py-3 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 text-sm bg-card text-foreground"
                 >
                   <option value="">All Status</option>
                   <option value="ACTIVE">Active</option>
@@ -247,14 +240,14 @@ export default function TasksPage() {
 
               {/* Sort Options */}
               <div>
-                <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="sort" className="block text-sm font-medium text-foreground mb-2">
                   🔄 Sort
                 </label>
                 <select
                   id="sort"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+                  className="w-full px-4 py-3 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 text-sm bg-card text-foreground"
                 >
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
@@ -268,12 +261,12 @@ export default function TasksPage() {
 
         {/* Tasks List */}
         {filteredAndSortedTasks.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl shadow-lg border border-gray-100">
+          <div className="text-center py-16 bg-card rounded-xl shadow-lg border-theme">
             <div className="text-8xl mb-6">📋</div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+            <h3 className="text-2xl font-bold text-foreground mb-4">
               {tasks.length === 0 ? "No tasks yet!" : "No tasks found"}
             </h3>
-            <p className="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+            <p className="text-muted text-lg mb-8 max-w-md mx-auto">
               {tasks.length === 0 
                 ? "Get started by creating your first task to stay organized and productive!" 
                 : "Try adjusting your search or filters to find what you're looking for."}
@@ -281,7 +274,7 @@ export default function TasksPage() {
             {tasks.length === 0 ? (
               <Link 
                 href="/tasks/new"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium inline-block"
+                className="bg-gradient-to-r from-[var(--turquoise-600)] to-purple-600 text-white px-8 py-3 rounded-full hover:from-[var(--turquoise-700)] hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium inline-block"
               >
                 Create Your First Task
               </Link>
@@ -300,17 +293,17 @@ export default function TasksPage() {
         ) : (
           <div className="grid gap-6">
             {filteredAndSortedTasks.map((task) => (
-              <div key={task.id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200">
+              <div key={task.id} className="bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)]">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-bold text-xl text-gray-900 pr-4">{task.title}</h3>
+                      <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
                       {task.priority && (
                         <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                          task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200' :
-                          task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                          task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                          'bg-blue-50 text-blue-700 border-blue-200'
+                          task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
+                          task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
+                          task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                          'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
                         }`}>
                           {task.priority}
                         </span>
@@ -318,14 +311,14 @@ export default function TasksPage() {
                     </div>
                     
                     {task.description && (
-                      <p className="text-gray-600 mb-4 text-sm leading-relaxed">{task.description}</p>
+                      <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
                     )}
                     
                     <div className="flex items-center flex-wrap gap-3">
                       <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                        task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200' :
-                        task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                        'bg-gray-50 text-gray-700 border-gray-200'
+                        task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
+                        task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                        'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
                       }`}>
                         {task.status.replace('_', ' ')}
                       </span>
@@ -333,8 +326,8 @@ export default function TasksPage() {
                       {task.dueDate && (
                         <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${
                           isOverdue(task.dueDate, task.status) 
-                            ? 'bg-red-50 text-red-700 border-red-200' 
-                            : 'bg-gray-50 text-gray-700 border-gray-200'
+                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' 
+                            : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
                         }`}>
                           <span>📅</span>
                           <span>{isOverdue(task.dueDate, task.status) ? 'Overdue: ' : 'Due: '}</span>
@@ -342,7 +335,7 @@ export default function TasksPage() {
                         </span>
                       )}
                       
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted">
                         Created: {new Date(task.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -353,7 +346,7 @@ export default function TasksPage() {
                     {task.status !== 'DONE' && (
                       <button
                         onClick={() => handleMarkAsDone(task.id)}
-                        className="bg-gray-100 text-gray-500 p-2 rounded-full text-sm hover:bg-green-100 hover:text-green-600 transition-all duration-200 hover:scale-110 flex items-center justify-center"
+                        className="bg-gray-100 text-gray-500 p-2 rounded-full text-sm hover:bg-green-100 hover:text-green-600 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 transition-all duration-200 hover:scale-110 flex items-center justify-center"
                         title="Mark as done"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,7 +356,7 @@ export default function TasksPage() {
                     )}
                     <button
                       onClick={() => router.push(`/tasks/edit/${task.id}`)}
-                      className="bg-blue-100 text-blue-600 p-2 rounded-full text-sm hover:bg-blue-200 transition-all duration-200 hover:scale-110"
+                      className="bg-blue-100 text-blue-600 p-2 rounded-full text-sm hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-110"
                       title="Edit task"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -372,7 +365,7 @@ export default function TasksPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(task.id)}
-                      className="bg-red-100 text-red-600 p-2 rounded-full text-sm hover:bg-red-200 transition-all duration-200 hover:scale-110"
+                      className="bg-red-100 text-red-600 p-2 rounded-full text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-all duration-200 hover:scale-110"
                       title="Delete task"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
