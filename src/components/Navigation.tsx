@@ -42,6 +42,9 @@ export default function Navigation() {
         
         {session ? (
           <>
+            {/* ADDED CATEGORIES LINK */}
+            <li><Link href="/categories" className="hover:underline">Categories</Link></li>
+            
             <li>
               <button
                 onClick={toggleDarkMode}

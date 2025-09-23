@@ -1,45 +1,48 @@
-// src/app/tasks/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority?: string;
-  dueDate: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Task, Category } from "@/types/task";
+import NotificationDashboard from "@/components/NotificationDashboard";
+import { getDueDateStatus, getDueDateBadgeColor, getDueDateIcon, getDueDateText } from "@/lib/dateUtils";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [sortByPriority, setSortByPriority] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/tasks");
-        if (response.ok) {
-          const tasksData = await response.json();
+        const [tasksResponse, categoriesResponse] = await Promise.all([
+          fetch("/api/tasks"),
+          fetch("/api/categories")
+        ]);
+
+        if (tasksResponse.ok) {
+          const tasksData = await tasksResponse.json();
           setTasks(tasksData.tasks || []);
         }
+
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json();
+          setCategories(categoriesData.categories || []);
+        }
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTasks();
+    fetchData();
   }, []);
 
   const handleMarkAsDone = async (taskId: string) => {
@@ -90,6 +93,17 @@ export default function TasksPage() {
     }
   };
 
+  // Priority order: URGENT -> HIGH -> MEDIUM -> LOW
+  const getPriorityValue = (priority: string) => {
+    switch (priority) {
+      case 'URGENT': return 4;
+      case 'HIGH': return 3;
+      case 'MEDIUM': return 2;
+      case 'LOW': return 1;
+      default: return 0;
+    }
+  };
+
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
       const matchesSearch = searchTerm === "" || 
@@ -102,11 +116,30 @@ export default function TasksPage() {
       } else if (statusFilter !== "") {
         matchesStatus = task.status === statusFilter;
       }
+
+      let matchesCategory = true;
+      if (categoryFilter !== "") {
+        matchesCategory = task.categories.some(cat => cat.id === categoryFilter);
+      }
       
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesCategory;
     });
 
+    // Apply sorting
     return filtered.sort((a, b) => {
+      if (sortByPriority) {
+        // Priority-based sorting (URGENT first, then HIGH, MEDIUM, LOW)
+        const priorityA = getPriorityValue(a.priority || '');
+        const priorityB = getPriorityValue(b.priority || '');
+        
+        if (priorityB !== priorityA) {
+          return priorityB - priorityA; // Higher priority first
+        }
+        
+        // If same priority, fall through to the selected sort option
+      }
+
+      // Apply the regular sort option
       switch (sortBy) {
         case "oldest":
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -121,12 +154,7 @@ export default function TasksPage() {
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [tasks, searchTerm, statusFilter, sortBy]);
-
-  const isOverdue = (dueDate: Date | null, status: string) => {
-    if (!dueDate || status === 'DONE') return false;
-    return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
-  };
+  }, [tasks, searchTerm, statusFilter, categoryFilter, sortBy, sortByPriority]);
 
   if (isLoading) {
     return (
@@ -193,9 +221,12 @@ export default function TasksPage() {
           </div>
         </div>
 
+        {/* Notification Dashboard */}
+        <NotificationDashboard tasks={tasks} />
+
         {/* Search and Filter Section */}
         <div className="bg-card p-6 rounded-xl shadow-lg mb-8 border-theme">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Search Input */}
             <div className="lg:col-span-2">
               <label htmlFor="search" className="block text-sm font-medium text-foreground mb-2">
@@ -256,6 +287,53 @@ export default function TasksPage() {
                 </select>
               </div>
             </div>
+
+            {/* Category Filter */}
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-foreground mb-2">
+                🏷️ Category
+              </label>
+              <select
+                id="category"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-4 py-3 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 text-sm bg-card text-foreground"
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority Sort Toggle */}
+            <div className="flex items-end">
+              <label className="flex items-center space-x-3 p-3 bg-card border border-theme rounded-xl hover:bg-surface cursor-pointer transition-all duration-200">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={sortByPriority}
+                    onChange={(e) => setSortByPriority(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-10 h-6 rounded-full transition-all duration-300 ${
+                    sortByPriority ? 'bg-[var(--turquoise-500)]' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}>
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
+                      sortByPriority ? 'transform translate-x-5' : 'transform translate-x-1'
+                    }`}></div>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-foreground">🚨 Priority Sort</span>
+                  <span className="text-xs text-muted">
+                    {sortByPriority ? 'URGENT → HIGH → MEDIUM → LOW' : 'Click to enable'}
+                  </span>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -283,6 +361,8 @@ export default function TasksPage() {
                 onClick={() => {
                   setSearchTerm("");
                   setStatusFilter("");
+                  setCategoryFilter("");
+                  setSortByPriority(false);
                 }}
                 className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-8 py-3 rounded-full hover:from-gray-700 hover:to-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
               >
@@ -292,90 +372,109 @@ export default function TasksPage() {
           </div>
         ) : (
           <div className="grid gap-6">
-            {filteredAndSortedTasks.map((task) => (
-              <div key={task.id} className="bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)]">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
-                      {task.priority && (
-                        <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                          task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
-                          task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
-                          task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
-                          'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-                        }`}>
-                          {task.priority}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {task.description && (
-                      <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
-                    )}
-                    
-                    <div className="flex items-center flex-wrap gap-3">
-                      <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                        task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
-                        task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
-                        'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                      }`}>
-                        {task.status.replace('_', ' ')}
-                      </span>
+            {filteredAndSortedTasks.map((task) => {
+              const dueDateStatus = getDueDateStatus(task.dueDate, task.status);
+              
+              return (
+                <div key={task.id} className="bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)]">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
+                        {task.priority && (
+                          <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                            task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
+                            task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
+                            task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                          }`}>
+                            {task.priority}
+                          </span>
+                        )}
+                      </div>
                       
-                      {task.dueDate && (
-                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${
-                          isOverdue(task.dueDate, task.status) 
-                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' 
-                            : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                        }`}>
-                          <span>📅</span>
-                          <span>{isOverdue(task.dueDate, task.status) ? 'Overdue: ' : 'Due: '}</span>
-                          <span>{new Date(task.dueDate).toLocaleDateString()}</span>
-                        </span>
+                      {task.description && (
+                        <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
                       )}
                       
-                      <span className="text-xs text-muted">
-                        Created: {new Date(task.createdAt).toLocaleDateString()}
-                      </span>
+                      {/* Categories Display */}
+                      {task.categories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {task.categories.map((category) => (
+                            <span 
+                              key={category.id}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1"
+                              style={{ 
+                                backgroundColor: `${category.color}20`,
+                                color: category.color,
+                                borderColor: `${category.color}40`
+                              }}
+                            >
+                              <span>🏷️</span>
+                              <span>{category.name}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center flex-wrap gap-3">
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                          task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
+                          task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                          'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                        }`}>
+                          {task.status.replace('_', ' ')}
+                        </span>
+                        
+                        {task.dueDate && (
+                          <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${getDueDateBadgeColor(dueDateStatus.status)}`}>
+                            <span>{getDueDateIcon(dueDateStatus.status)}</span>
+                            <span>{getDueDateText(task.dueDate, dueDateStatus.status, dueDateStatus.daysUntilDue)}</span>
+                          </span>
+                        )}
+                        
+                        <span className="text-xs text-muted">
+                          Created: {new Date(task.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex space-x-2 ml-6">
-                    {task.status !== 'DONE' && (
+                    
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2 ml-6">
+                      {task.status !== 'DONE' && (
+                        <button
+                          onClick={() => handleMarkAsDone(task.id)}
+                          className="bg-gray-100 text-gray-500 p-2 rounded-full text-sm hover:bg-green-100 hover:text-green-600 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 transition-all duration-200 hover:scale-110 flex items-center justify-center"
+                          title="Mark as done"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleMarkAsDone(task.id)}
-                        className="bg-gray-100 text-gray-500 p-2 rounded-full text-sm hover:bg-green-100 hover:text-green-600 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 transition-all duration-200 hover:scale-110 flex items-center justify-center"
-                        title="Mark as done"
+                        onClick={() => router.push(`/tasks/edit/${task.id}`)}
+                        className="bg-blue-100 text-blue-600 p-2 rounded-full text-sm hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-110"
+                        title="Edit task"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
-                    )}
-                    <button
-                      onClick={() => router.push(`/tasks/edit/${task.id}`)}
-                      className="bg-blue-100 text-blue-600 p-2 rounded-full text-sm hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-110"
-                      title="Edit task"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(task.id)}
-                      className="bg-red-100 text-red-600 p-2 rounded-full text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-all duration-200 hover:scale-110"
-                      title="Delete task"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="bg-red-100 text-red-600 p-2 rounded-full text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-all duration-200 hover:scale-110"
+                        title="Delete task"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

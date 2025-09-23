@@ -1,10 +1,10 @@
-// src/app/api/tasks/route.ts - COMPLETE FIXED VERSION
+// src/app/api/tasks/route.ts - FIXED WITH PROPER TYPES
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// GET - Fetch all tasks for the current user
+// GET - Fetch all tasks for the current user WITH CATEGORIES
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,19 +17,35 @@ export async function GET(request: NextRequest) {
       where: { 
         userId: session.user.id 
       },
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        }
+      },
       orderBy: {
         createdAt: "desc",
       },
     });
+
+    // Transform the data to include categories directly
+    const tasksWithCategories = tasks.map((task: any) => ({
+      ...task,
+      categories: task.categories.map((tc: any) => tc.category),
+      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString()
+    }));
     
-    return NextResponse.json({ tasks });
+    return NextResponse.json({ tasks: tasksWithCategories });
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-// POST - Create a new task with priority
+// POST - Create a new task with priority AND CATEGORIES
 export async function POST(request: NextRequest) {
   try {
     console.log("API: Task creation request received");
@@ -67,14 +83,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const { title, description, status, priority, dueDate } = body;
+    const { title, description, status, priority, dueDate, categoryIds = [] } = body;
 
     // Validate required fields
     if (!title) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    // Create the task
+    // Validate categories belong to the user
+    if (categoryIds.length > 0) {
+      const userCategories = await prisma.category.findMany({
+        where: {
+          id: { in: categoryIds },
+          userId: session.user.id
+        }
+      });
+
+      if (userCategories.length !== categoryIds.length) {
+        return NextResponse.json(
+          { error: "Some categories do not exist or don't belong to you" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Create the task with categories
     try {
       const task = await prisma.task.create({
         data: {
@@ -88,11 +121,36 @@ export async function POST(request: NextRequest) {
               id: session.user.id,
             },
           },
+          categories: categoryIds.length > 0 ? {
+            create: categoryIds.map((categoryId: string) => ({
+              category: {
+                connect: {
+                  id: categoryId
+                }
+              }
+            }))
+          } : undefined
         },
+        include: {
+          categories: {
+            include: {
+              category: true
+            }
+          }
+        }
       });
 
-      console.log("API: Task created successfully:", task);
-      return NextResponse.json(task, { status: 201 });
+      // Transform the response to include categories directly
+      const taskWithCategories = {
+        ...task,
+        categories: task.categories.map((tc: any) => tc.category),
+        dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString()
+      };
+
+      console.log("API: Task created successfully with categories:", taskWithCategories);
+      return NextResponse.json(taskWithCategories, { status: 201 });
     } catch (dbError: any) {
       console.error("API: Database error:", dbError);
       return NextResponse.json({ error: "Database error: " + dbError.message }, { status: 500 });
