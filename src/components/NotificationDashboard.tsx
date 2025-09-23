@@ -3,12 +3,15 @@
 import { Task } from "@/types/task";
 import { getDueDateStatus, getDueDateBadgeColor, getDueDateIcon, getDueDateText } from "@/lib/dateUtils";
 import Link from "next/link";
+import { useState } from "react";
 
 interface NotificationDashboardProps {
   tasks: Task[];
 }
 
 export default function NotificationDashboard({ tasks }: NotificationDashboardProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
   const activeTasks = tasks.filter(task => task.status !== 'DONE');
   
   const tasksWithDueDates = activeTasks.map(task => ({
@@ -27,6 +30,8 @@ export default function NotificationDashboard({ tasks }: NotificationDashboardPr
 
   const hasNotifications = overdueTasks.length > 0 || dueTodayTasks.length > 0 || 
                           dueTomorrowTasks.length > 0 || dueThisWeekTasks.length > 0;
+
+  const totalAlerts = overdueTasks.length + dueTodayTasks.length + dueTomorrowTasks.length + dueThisWeekTasks.length;
 
   if (!hasNotifications) {
     return (
@@ -98,44 +103,89 @@ export default function NotificationDashboard({ tasks }: NotificationDashboardPr
   };
 
   return (
-    <div className="bg-card p-6 rounded-xl shadow-lg mb-8 border-theme">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-foreground">🚨 Due Date Alerts</h2>
-        <span className="bg-gradient-to-r from-[var(--turquoise-500)] to-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-          {overdueTasks.length + dueTodayTasks.length + dueTomorrowTasks.length} urgent
-        </span>
+    <div className="bg-card rounded-xl shadow-lg mb-8 border-theme overflow-hidden">
+      {/* Header with Collapse Toggle */}
+      <div 
+        className="p-6 border-b border-theme cursor-pointer hover:bg-surface transition-colors"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-2xl font-bold text-foreground">🚨 Due Date Alerts</h2>
+            <span className="bg-gradient-to-r from-[var(--turquoise-500)] to-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              {totalAlerts} urgent
+            </span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Link 
+              href="/notifications"
+              className="text-sm text-[var(--turquoise-500)] hover:text-[var(--turquoise-600)] hover:underline font-medium"
+              onClick={(e) => e.stopPropagation()} // Prevent collapse when clicking link
+            >
+              View Details
+            </Link>
+            <button 
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed(!isCollapsed);
+              }}
+            >
+              <svg 
+                className={`w-5 h-5 text-muted transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* Summary Stats (Always visible) */}
+        <div className="flex items-center space-x-4 mt-3 text-sm text-muted">
+          <span>📅 {overdueTasks.length} overdue</span>
+          <span>⏰ {dueTodayTasks.length} due today</span>
+          <span>📆 {dueTomorrowTasks.length + dueThisWeekTasks.length} upcoming</span>
+        </div>
       </div>
-      
-      <NotificationSection 
-        title="Overdue Tasks" 
-        tasks={overdueTasks} 
-        icon="🚨" 
-      />
-      
-      <NotificationSection 
-        title="Due Today" 
-        tasks={dueTodayTasks} 
-        icon="📅" 
-      />
-      
-      <NotificationSection 
-        title="Due Tomorrow" 
-        tasks={dueTomorrowTasks} 
-        icon="⏰" 
-      />
-      
-      <NotificationSection 
-        title="Due This Week" 
-        tasks={dueThisWeekTasks} 
-        icon="📆" 
-      />
 
-      <div className="mt-4 pt-4 border-t border-theme">
-        <p className="text-sm text-muted">
-          Total active tasks: {activeTasks.length} • 
-          Completed: {tasks.filter(t => t.status === 'DONE').length}
-        </p>
-      </div>
+      {/* Collapsible Content */}
+      {!isCollapsed && (
+        <div className="p-6">
+          <NotificationSection 
+            title="Overdue Tasks" 
+            tasks={overdueTasks} 
+            icon="🚨" 
+          />
+          
+          <NotificationSection 
+            title="Due Today" 
+            tasks={dueTodayTasks} 
+            icon="📅" 
+          />
+          
+          <NotificationSection 
+            title="Due Tomorrow" 
+            tasks={dueTomorrowTasks} 
+            icon="⏰" 
+          />
+          
+          <NotificationSection 
+            title="Due This Week" 
+            tasks={dueThisWeekTasks} 
+            icon="📆" 
+          />
+
+          <div className="mt-4 pt-4 border-t border-theme">
+            <p className="text-sm text-muted">
+              Total active tasks: {activeTasks.length} • 
+              Completed: {tasks.filter(t => t.status === 'DONE').length}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
