@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Task, Category } from "@/types/task";
 import NotificationDashboard from "@/components/NotificationDashboard";
 import { getDueDateStatus, getDueDateBadgeColor, getDueDateIcon, getDueDateText } from "@/lib/dateUtils";
+import ExportButton from "@/components/ExportButton";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -16,6 +17,7 @@ export default function TasksPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [sortByPriority, setSortByPriority] = useState(false);
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +47,31 @@ export default function TasksPage() {
     fetchData();
   }, []);
 
+  // Selection management
+  const toggleTaskSelection = (taskId: string) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId);
+    } else {
+      newSelected.add(taskId);
+    }
+    setSelectedTasks(newSelected);
+  };
+
+  const selectAllTasks = () => {
+    if (selectedTasks.size === filteredAndSortedTasks.length) {
+      // If all are selected, deselect all
+      setSelectedTasks(new Set());
+    } else {
+      // Select all visible tasks
+      setSelectedTasks(new Set(filteredAndSortedTasks.map(task => task.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedTasks(new Set());
+  };
+
   const handleMarkAsDone = async (taskId: string) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -61,6 +88,12 @@ export default function TasksPage() {
         setTasks(tasks.map(task => 
           task.id === taskId ? { ...task, status: "DONE" } : task
         ));
+        // Remove from selection if it was selected
+        if (selectedTasks.has(taskId)) {
+          const newSelected = new Set(selectedTasks);
+          newSelected.delete(taskId);
+          setSelectedTasks(newSelected);
+        }
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || "Failed to mark as done"}`);
@@ -83,6 +116,12 @@ export default function TasksPage() {
 
       if (response.ok) {
         setTasks(tasks.filter(task => task.id !== taskId));
+        // Remove from selection if it was selected
+        if (selectedTasks.has(taskId)) {
+          const newSelected = new Set(selectedTasks);
+          newSelected.delete(taskId);
+          setSelectedTasks(newSelected);
+        }
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || "Failed to delete task"}`);
@@ -156,6 +195,13 @@ export default function TasksPage() {
     });
   }, [tasks, searchTerm, statusFilter, categoryFilter, sortBy, sortByPriority]);
 
+  // Current filters object for ExportButton
+  const currentFilters = {
+    status: statusFilter,
+    priority: '', // We don't have priority filter in UI yet, but the ExportButton supports it
+    categoryId: categoryFilter
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen p-4">
@@ -212,6 +258,11 @@ export default function TasksPage() {
             <span className="bg-gradient-to-r from-[var(--turquoise-500)] to-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
               {filteredAndSortedTasks.length} task{filteredAndSortedTasks.length !== 1 ? 's' : ''}
             </span>
+            <ExportButton 
+              currentFilters={currentFilters} 
+              selectedTaskIds={Array.from(selectedTasks)}
+              totalTasksCount={filteredAndSortedTasks.length}
+            />
             <Link 
               href="/tasks/new"
               className="bg-gradient-to-r from-[var(--turquoise-600)] to-purple-600 text-white px-6 py-3 rounded-full hover:from-[var(--turquoise-700)] hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
@@ -220,6 +271,28 @@ export default function TasksPage() {
             </Link>
           </div>
         </div>
+
+        {/* Selection Controls */}
+        {selectedTasks.size > 0 && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <span className="text-blue-700 dark:text-blue-300 font-medium">
+                  {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={clearSelection}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm underline"
+                >
+                  Clear selection
+                </button>
+              </div>
+              <div className="text-blue-600 dark:text-blue-400 text-sm">
+                Export selected tasks or use filters above for bulk export
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Notification Dashboard */}
         <NotificationDashboard tasks={tasks} />
@@ -335,6 +408,30 @@ export default function TasksPage() {
               </label>
             </div>
           </div>
+
+          {/* Select All Controls */}
+          {filteredAndSortedTasks.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-theme">
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedTasks.size > 0 && selectedTasks.size === filteredAndSortedTasks.length}
+                    onChange={selectAllTasks}
+                    className="w-4 h-4 text-[var(--turquoise-500)] bg-card border-theme rounded focus:ring-[var(--turquoise-500)] focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-foreground">
+                    {selectedTasks.size === filteredAndSortedTasks.length ? 'Deselect all' : 'Select all'} visible tasks
+                  </span>
+                </label>
+                {selectedTasks.size > 0 && (
+                  <span className="text-sm text-muted">
+                    ({selectedTasks.size} of {filteredAndSortedTasks.length} selected)
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tasks List */}
@@ -363,6 +460,7 @@ export default function TasksPage() {
                   setStatusFilter("");
                   setCategoryFilter("");
                   setSortByPriority(false);
+                  clearSelection();
                 }}
                 className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-8 py-3 rounded-full hover:from-gray-700 hover:to-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
               >
@@ -374,72 +472,91 @@ export default function TasksPage() {
           <div className="grid gap-6">
             {filteredAndSortedTasks.map((task) => {
               const dueDateStatus = getDueDateStatus(task.dueDate, task.status);
+              const isSelected = selectedTasks.has(task.id);
               
               return (
-                <div key={task.id} className="bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)]">
+                <div 
+                  key={task.id} 
+                  className={`bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)] ${
+                    isSelected ? 'ring-2 ring-[var(--turquoise-500)] ring-opacity-50' : ''
+                  }`}
+                >
                   <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
-                        {task.priority && (
-                          <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                            task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
-                            task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
-                            task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
-                            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-                          }`}>
-                            {task.priority}
-                          </span>
-                        )}
-                      </div>
+                    {/* Selection Checkbox + Content */}
+                    <div className="flex-1 flex items-start space-x-4">
+                      {/* Selection Checkbox (NEW - for export only) */}
+                      <label className="flex items-start mt-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleTaskSelection(task.id)}
+                          className="w-4 h-4 text-[var(--turquoise-500)] bg-card border-theme rounded focus:ring-[var(--turquoise-500)] focus:ring-2 mt-1"
+                        />
+                      </label>
                       
-                      {task.description && (
-                        <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
-                      )}
-                      
-                      {/* Categories Display */}
-                      {task.categories.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {task.categories.map((category) => (
-                            <span 
-                              key={category.id}
-                              className="px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1"
-                              style={{ 
-                                backgroundColor: `${category.color}20`,
-                                color: category.color,
-                                borderColor: `${category.color}40`
-                              }}
-                            >
-                              <span>🏷️</span>
-                              <span>{category.name}</span>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
+                          {task.priority && (
+                            <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                              task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
+                              task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
+                              task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                              'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                            }`}>
+                              {task.priority}
                             </span>
-                          ))}
+                          )}
                         </div>
-                      )}
-                      
-                      <div className="flex items-center flex-wrap gap-3">
-                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                          task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
-                          task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
-                          'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                        }`}>
-                          {task.status.replace('_', ' ')}
-                        </span>
                         
-                        {task.dueDate && (
-                          <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${getDueDateBadgeColor(dueDateStatus.status)}`}>
-                            <span>{getDueDateIcon(dueDateStatus.status)}</span>
-                            <span>{getDueDateText(task.dueDate, dueDateStatus.status, dueDateStatus.daysUntilDue)}</span>
-                          </span>
+                        {task.description && (
+                          <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
                         )}
                         
-                        <span className="text-xs text-muted">
-                          Created: {new Date(task.createdAt).toLocaleDateString()}
-                        </span>
+                        {/* Categories Display */}
+                        {task.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {task.categories.map((category) => (
+                              <span 
+                                key={category.id}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1"
+                                style={{ 
+                                  backgroundColor: `${category.color}20`,
+                                  color: category.color,
+                                  borderColor: `${category.color}40`
+                                }}
+                              >
+                                <span>🏷️</span>
+                                <span>{category.name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center flex-wrap gap-3">
+                          <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                            task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
+                            task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                            'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+                          }`}>
+                            {task.status.replace('_', ' ')}
+                          </span>
+                          
+                          {task.dueDate && (
+                            <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${getDueDateBadgeColor(dueDateStatus.status)}`}>
+                              <span>{getDueDateIcon(dueDateStatus.status)}</span>
+                              <span>{getDueDateText(task.dueDate, dueDateStatus.status, dueDateStatus.daysUntilDue)}</span>
+                            </span>
+                          )}
+                          
+                          <span className="text-xs text-muted">
+                            Created: {new Date(task.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     
-                    {/* Action Buttons */}
+                    {/* Action Buttons (Mark as Done, Edit, Delete - UNCHANGED) */}
                     <div className="flex space-x-2 ml-6">
                       {task.status !== 'DONE' && (
                         <button
