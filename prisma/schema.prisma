@@ -43,6 +43,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   tasks         Task[]
+  categories    Category[]
   hashedPassword String?
 }
 
@@ -54,20 +55,52 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// This is our main Task model. This is what we're building!
+// Professional Task model with proper category relationships
 model Task {
-  id          String   @id @default(cuid()) // A unique ID for each task
-  title       String   // The name of the task (e.g., "Buy milk")
-  description String?  // More details about the task (optional)
-  status      String   @default("TODO") // Is it TODO, IN_PROGRESS, or DONE?
-  priority    String?  // Is it LOW, MEDIUM, or HIGH? (optional)
-  dueDate     DateTime? // When is the task due? (optional)
-  tags        String?  // A list of tags (e.g., "work, personal, urgent")
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("TODO")
+  priority    String?  // LOW, MEDIUM, HIGH, URGENT
+  dueDate     DateTime?
+  
+  // Remove the old tags field - we're using proper categories now
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
 
-  // Connects this Task to the User who owns it
-  user   User @relation(fields: [userId], references: [id])
-  userId String
+  // Many-to-many relationship with Categories
+  categories  TaskCategory[]
 
-  createdAt DateTime @default(now()) // When the task was created
-  updatedAt DateTime @updatedAt // When the task was last updated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Category model for professional tagging system
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#3b82f6") // Default blue color
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  
+  // Many-to-many relationship with Tasks
+  tasks       TaskCategory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, userId]) // Users can't have duplicate category names
+}
+
+// Join table for many-to-many relationship between Task and Category
+model TaskCategory {
+  id          String   @id @default(cuid())
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId      String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  String
+
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, categoryId]) // Prevent duplicate assignments
 }
