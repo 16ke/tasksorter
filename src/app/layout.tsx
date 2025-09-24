@@ -23,7 +23,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-surface`}>
+      <body className={inter.className}>
         <AuthProvider>
           {/* Header only shows when logged in */}
           {session && (
@@ -37,7 +37,7 @@ export default async function RootLayout({
             </header>
           )}
           
-          {/* Main Content - FIXED: Remove container constraints and use full width */}
+          {/* Main Content - Pattern will now show behind everything */}
           <main className="min-h-screen">
             {children}
           </main>

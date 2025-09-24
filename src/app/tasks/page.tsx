@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Task, Category } from "@/types/task";
@@ -8,24 +8,277 @@ import NotificationDashboard from "@/components/NotificationDashboard";
 import { getDueDateStatus, getDueDateBadgeColor, getDueDateIcon, getDueDateText } from "@/lib/dateUtils";
 import ExportButton from "@/components/ExportButton";
 
+// Type definitions for component props
+interface TaskCardProps {
+  task: Task;
+  isSelected: boolean;
+  onToggleSelection: (taskId: string) => void;
+  onMarkAsDone: (taskId: string) => void;
+  onEdit: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
+}
+
+interface ExportFilters {
+  status: string;
+  priority: string;
+  categoryId: string;
+}
+
+interface PriorityValueMap {
+  [key: string]: number;
+}
+
+// Memoized task card component to prevent unnecessary re-renders
+const TaskCard = React.memo(({ 
+  task, 
+  isSelected, 
+  onToggleSelection, 
+  onMarkAsDone, 
+  onEdit, 
+  onDelete 
+}: TaskCardProps) => {
+  const dueDateStatus = getDueDateStatus(task.dueDate, task.status);
+  
+  return (
+    <div 
+      className={`bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)] ${
+        isSelected ? 'ring-2 ring-[var(--turquoise-500)] ring-opacity-50' : ''
+      }`}
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex-1 flex items-start space-x-4">
+          <label className="flex items-start mt-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelection(task.id)}
+              className="w-4 h-4 text-[var(--turquoise-500)] bg-card border-theme rounded focus:ring-[var(--turquoise-500)] focus:ring-2 mt-1"
+            />
+          </label>
+          
+          <div className="flex-1">
+            <div className="flex items-start justify-between mb-3">
+              <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
+              {task.priority && (
+                <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                  task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
+                  task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
+                  task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                }`}>
+                  {task.priority}
+                </span>
+              )}
+            </div>
+            
+            {task.description && (
+              <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
+            )}
+            
+            {task.categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {task.categories.map((category) => (
+                  <span 
+                    key={category.id}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1"
+                    style={{ 
+                      backgroundColor: `${category.color}20`,
+                      color: category.color,
+                      borderColor: `${category.color}40`
+                    }}
+                  >
+                    <span>🏷️</span>
+                    <span>{category.name}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex items-center flex-wrap gap-3">
+              <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
+                task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
+                'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+              }`}>
+                {task.status.replace('_', ' ')}
+              </span>
+              
+              {task.dueDate && (
+                <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${getDueDateBadgeColor(dueDateStatus.status)}`}>
+                  <span>{getDueDateIcon(dueDateStatus.status)}</span>
+                  <span>{getDueDateText(task.dueDate, dueDateStatus.status, dueDateStatus.daysUntilDue)}</span>
+                </span>
+              )}
+              
+              <span className="text-xs text-muted">
+                Created: {new Date(task.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex space-x-2 ml-6">
+          {task.status !== 'DONE' && (
+            <button
+              onClick={() => onMarkAsDone(task.id)}
+              className="bg-gray-100 text-gray-500 p-2 rounded-full text-sm hover:bg-green-100 hover:text-green-600 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 transition-all duration-200 hover:scale-110 flex items-center justify-center"
+              title="Mark as done"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={() => onEdit(task.id)}
+            className="bg-blue-100 text-blue-600 p-2 rounded-full text-sm hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-110"
+            title="Edit task"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onDelete(task.id)}
+            className="bg-red-100 text-red-600 p-2 rounded-full text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-all duration-200 hover:scale-110"
+            title="Delete task"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+TaskCard.displayName = 'TaskCard';
+
+// Loading skeleton component
+const LoadingSkeleton = () => (
+  <div className="min-h-screen p-4">
+    <div className="max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent">
+            My Tasks
+          </h1>
+        </div>
+        <div className="bg-gray-300 text-gray-500 px-6 py-3 rounded-full animate-pulse">
+          + New Task
+        </div>
+      </div>
+      
+      <div className="grid gap-6">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="bg-card p-6 rounded-xl shadow-lg animate-pulse border-theme">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="h-7 bg-gray-200 rounded w-3/4 mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-3"></div>
+                <div className="flex items-center mt-4 space-x-3">
+                  <div className="h-6 bg-gray-200 rounded w-20"></div>
+                  <div className="h-6 bg-gray-200 rounded w-24"></div>
+                </div>
+              </div>
+              <div className="flex space-x-3 ml-6">
+                <div className="h-9 bg-gray-200 rounded-full w-9"></div>
+                <div className="h-9 bg-gray-200 rounded-full w-9"></div>
+                <div className="h-9 bg-gray-200 rounded-full w-9"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-  const [sortByPriority, setSortByPriority] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [sortByPriority, setSortByPriority] = useState<boolean>(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const router = useRouter();
 
+  // Memoized priority value calculation with proper typing
+  const getPriorityValue = useCallback((priority: string): number => {
+    const priorityMap: PriorityValueMap = {
+      'URGENT': 4,
+      'HIGH': 3,
+      'MEDIUM': 2,
+      'LOW': 1
+    };
+    return priorityMap[priority] || 0;
+  }, []);
+
+  // Optimized filtering and sorting with useMemo
+  const filteredAndSortedTasks = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    
+    const filtered = tasks.filter((task: Task) => {
+      const matchesSearch = searchTerm === "" || 
+        task.title.toLowerCase().includes(searchLower) ||
+        (task.description && task.description.toLowerCase().includes(searchLower));
+      
+      let matchesStatus = true;
+      if (statusFilter === "ACTIVE") {
+        matchesStatus = task.status === "TODO" || task.status === "IN_PROGRESS";
+      } else if (statusFilter !== "") {
+        matchesStatus = task.status === statusFilter;
+      }
+
+      const matchesCategory = categoryFilter === "" || 
+        task.categories.some((cat: Category) => cat.id === categoryFilter);
+      
+      return matchesSearch && matchesStatus && matchesCategory;
+    });
+
+    return filtered.sort((a: Task, b: Task) => {
+      if (sortByPriority) {
+        const priorityA = getPriorityValue(a.priority || '');
+        const priorityB = getPriorityValue(b.priority || '');
+        
+        if (priorityB !== priorityA) {
+          return priorityB - priorityA;
+        }
+      }
+
+      switch (sortBy) {
+        case "oldest":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "dueDate":
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        case "title":
+          return a.title.localeCompare(b.title);
+        case "newest":
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+  }, [tasks, searchTerm, statusFilter, categoryFilter, sortBy, sortByPriority, getPriorityValue]);
+
+  // Memoized data fetching
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       try {
         const [tasksResponse, categoriesResponse] = await Promise.all([
-          fetch("/api/tasks"),
-          fetch("/api/categories")
+          fetch("/api/tasks", { 
+            cache: 'force-cache' as RequestCache,
+            next: { tags: ['tasks'] }
+          }),
+          fetch("/api/categories", { 
+            cache: 'force-cache' as RequestCache,
+            next: { tags: ['categories'] }
+          })
         ]);
 
         if (tasksResponse.ok) {
@@ -47,32 +300,34 @@ export default function TasksPage() {
     fetchData();
   }, []);
 
-  // Selection management
-  const toggleTaskSelection = (taskId: string) => {
-    const newSelected = new Set(selectedTasks);
-    if (newSelected.has(taskId)) {
-      newSelected.delete(taskId);
-    } else {
-      newSelected.add(taskId);
-    }
-    setSelectedTasks(newSelected);
-  };
+  // Memoized event handlers with proper typing
+  const toggleTaskSelection = useCallback((taskId: string): void => {
+    setSelectedTasks((prev: Set<string>) => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(taskId)) {
+        newSelected.delete(taskId);
+      } else {
+        newSelected.add(taskId);
+      }
+      return newSelected;
+    });
+  }, []);
 
-  const selectAllTasks = () => {
-    if (selectedTasks.size === filteredAndSortedTasks.length) {
-      // If all are selected, deselect all
-      setSelectedTasks(new Set());
-    } else {
-      // Select all visible tasks
-      setSelectedTasks(new Set(filteredAndSortedTasks.map(task => task.id)));
-    }
-  };
+  const selectAllTasks = useCallback((): void => {
+    setSelectedTasks((prev: Set<string>) => {
+      if (prev.size === filteredAndSortedTasks.length) {
+        return new Set();
+      } else {
+        return new Set(filteredAndSortedTasks.map((task: Task) => task.id));
+      }
+    });
+  }, [filteredAndSortedTasks]);
 
-  const clearSelection = () => {
+  const clearSelection = useCallback((): void => {
     setSelectedTasks(new Set());
-  };
+  }, []);
 
-  const handleMarkAsDone = async (taskId: string) => {
+  const handleMarkAsDone = useCallback(async (taskId: string): Promise<void> => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "PUT",
@@ -85,15 +340,14 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
-        setTasks(tasks.map(task => 
+        setTasks((prev: Task[]) => prev.map(task => 
           task.id === taskId ? { ...task, status: "DONE" } : task
         ));
-        // Remove from selection if it was selected
-        if (selectedTasks.has(taskId)) {
-          const newSelected = new Set(selectedTasks);
+        setSelectedTasks((prev: Set<string>) => {
+          const newSelected = new Set(prev);
           newSelected.delete(taskId);
-          setSelectedTasks(newSelected);
-        }
+          return newSelected;
+        });
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || "Failed to mark as done"}`);
@@ -102,9 +356,13 @@ export default function TasksPage() {
       console.error("Error marking task as done:", error);
       alert("Failed to mark task as done.");
     }
-  };
+  }, []);
 
-  const handleDelete = async (taskId: string) => {
+  const handleEdit = useCallback((taskId: string): void => {
+    router.push(`/tasks/edit/${taskId}`);
+  }, [router]);
+
+  const handleDelete = useCallback(async (taskId: string): Promise<void> => {
     if (!confirm("Are you sure you want to delete this task?")) {
       return;
     }
@@ -115,13 +373,12 @@ export default function TasksPage() {
       });
 
       if (response.ok) {
-        setTasks(tasks.filter(task => task.id !== taskId));
-        // Remove from selection if it was selected
-        if (selectedTasks.has(taskId)) {
-          const newSelected = new Set(selectedTasks);
+        setTasks((prev: Task[]) => prev.filter(task => task.id !== taskId));
+        setSelectedTasks((prev: Set<string>) => {
+          const newSelected = new Set(prev);
           newSelected.delete(taskId);
-          setSelectedTasks(newSelected);
-        }
+          return newSelected;
+        });
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || "Failed to delete task"}`);
@@ -130,117 +387,16 @@ export default function TasksPage() {
       console.error("Error deleting task:", error);
       alert("Failed to delete task.");
     }
-  };
+  }, []);
 
-  // Priority order: URGENT -> HIGH -> MEDIUM -> LOW
-  const getPriorityValue = (priority: string) => {
-    switch (priority) {
-      case 'URGENT': return 4;
-      case 'HIGH': return 3;
-      case 'MEDIUM': return 2;
-      case 'LOW': return 1;
-      default: return 0;
-    }
-  };
-
-  const filteredAndSortedTasks = useMemo(() => {
-    let filtered = tasks.filter(task => {
-      const matchesSearch = searchTerm === "" || 
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      let matchesStatus = true;
-      if (statusFilter === "ACTIVE") {
-        matchesStatus = task.status === "TODO" || task.status === "IN_PROGRESS";
-      } else if (statusFilter !== "") {
-        matchesStatus = task.status === statusFilter;
-      }
-
-      let matchesCategory = true;
-      if (categoryFilter !== "") {
-        matchesCategory = task.categories.some(cat => cat.id === categoryFilter);
-      }
-      
-      return matchesSearch && matchesStatus && matchesCategory;
-    });
-
-    // Apply sorting
-    return filtered.sort((a, b) => {
-      if (sortByPriority) {
-        // Priority-based sorting (URGENT first, then HIGH, MEDIUM, LOW)
-        const priorityA = getPriorityValue(a.priority || '');
-        const priorityB = getPriorityValue(b.priority || '');
-        
-        if (priorityB !== priorityA) {
-          return priorityB - priorityA; // Higher priority first
-        }
-        
-        // If same priority, fall through to the selected sort option
-      }
-
-      // Apply the regular sort option
-      switch (sortBy) {
-        case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case "dueDate":
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-        case "title":
-          return a.title.localeCompare(b.title);
-        case "newest":
-        default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-    });
-  }, [tasks, searchTerm, statusFilter, categoryFilter, sortBy, sortByPriority]);
-
-  // Current filters object for ExportButton
-  const currentFilters = {
+  const currentFilters: ExportFilters = useMemo(() => ({
     status: statusFilter,
-    priority: '', // We don't have priority filter in UI yet, but the ExportButton supports it
+    priority: '',
     categoryId: categoryFilter
-  };
+  }), [statusFilter, categoryFilter]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent">
-                My Tasks
-              </h1>
-            </div>
-            <div className="bg-gray-300 text-gray-500 px-6 py-3 rounded-full animate-pulse">
-              + New Task
-            </div>
-          </div>
-          
-          <div className="grid gap-6">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-card p-6 rounded-xl shadow-lg animate-pulse border-theme">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="h-7 bg-gray-200 rounded w-3/4 mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-3"></div>
-                    <div className="flex items-center mt-4 space-x-3">
-                      <div className="h-6 bg-gray-200 rounded w-20"></div>
-                      <div className="h-6 bg-gray-200 rounded w-24"></div>
-                    </div>
-                  </div>
-                  <div className="flex space-x-3 ml-6">
-                    <div className="h-9 bg-gray-200 rounded-full w-9"></div>
-                    <div className="h-9 bg-gray-200 rounded-full w-9"></div>
-                    <div className="h-9 bg-gray-200 rounded-full w-9"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -311,7 +467,7 @@ export default function TasksPage() {
                   id="search"
                   placeholder="Search by title or description..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="w-full px-4 py-3 pl-11 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 bg-card text-foreground"
                 />
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted">
@@ -331,7 +487,7 @@ export default function TasksPage() {
                 <select
                   id="status"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
                   className="w-full px-4 py-3 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 text-sm bg-card text-foreground"
                 >
                   <option value="">All Status</option>
@@ -350,7 +506,7 @@ export default function TasksPage() {
                 <select
                   id="sort"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value)}
                   className="w-full px-4 py-3 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 text-sm bg-card text-foreground"
                 >
                   <option value="newest">Newest</option>
@@ -369,11 +525,11 @@ export default function TasksPage() {
               <select
                 id="category"
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value)}
                 className="w-full px-4 py-3 border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent transition-all duration-200 text-sm bg-card text-foreground"
               >
                 <option value="">All Categories</option>
-                {categories.map((category) => (
+                {categories.map((category: Category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -388,7 +544,7 @@ export default function TasksPage() {
                   <input
                     type="checkbox"
                     checked={sortByPriority}
-                    onChange={(e) => setSortByPriority(e.target.checked)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSortByPriority(e.target.checked)}
                     className="sr-only"
                   />
                   <div className={`w-10 h-6 rounded-full transition-all duration-300 ${
@@ -470,128 +626,17 @@ export default function TasksPage() {
           </div>
         ) : (
           <div className="grid gap-6">
-            {filteredAndSortedTasks.map((task) => {
-              const dueDateStatus = getDueDateStatus(task.dueDate, task.status);
-              const isSelected = selectedTasks.has(task.id);
-              
-              return (
-                <div 
-                  key={task.id} 
-                  className={`bg-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-theme hover:border-[var(--turquoise-200)] ${
-                    isSelected ? 'ring-2 ring-[var(--turquoise-500)] ring-opacity-50' : ''
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    {/* Selection Checkbox + Content */}
-                    <div className="flex-1 flex items-start space-x-4">
-                      {/* Selection Checkbox (NEW - for export only) */}
-                      <label className="flex items-start mt-1 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleTaskSelection(task.id)}
-                          className="w-4 h-4 text-[var(--turquoise-500)] bg-card border-theme rounded focus:ring-[var(--turquoise-500)] focus:ring-2 mt-1"
-                        />
-                      </label>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <h3 className="font-bold text-xl text-foreground pr-4">{task.title}</h3>
-                          {task.priority && (
-                            <span className={`ml-2 px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                              task.priority === 'URGENT' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800' :
-                              task.priority === 'HIGH' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800' :
-                              task.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
-                              'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-                            }`}>
-                              {task.priority}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {task.description && (
-                          <p className="text-muted mb-4 text-sm leading-relaxed">{task.description}</p>
-                        )}
-                        
-                        {/* Categories Display */}
-                        {task.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {task.categories.map((category) => (
-                              <span 
-                                key={category.id}
-                                className="px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1"
-                                style={{ 
-                                  backgroundColor: `${category.color}20`,
-                                  color: category.color,
-                                  borderColor: `${category.color}40`
-                                }}
-                              >
-                                <span>🏷️</span>
-                                <span>{category.name}</span>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center flex-wrap gap-3">
-                          <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
-                            task.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
-                            task.status === 'IN_PROGRESS' ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800' :
-                            'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
-                          }`}>
-                            {task.status.replace('_', ' ')}
-                          </span>
-                          
-                          {task.dueDate && (
-                            <span className={`px-3 py-1.5 text-xs font-semibold rounded-full border flex items-center space-x-1 ${getDueDateBadgeColor(dueDateStatus.status)}`}>
-                              <span>{getDueDateIcon(dueDateStatus.status)}</span>
-                              <span>{getDueDateText(task.dueDate, dueDateStatus.status, dueDateStatus.daysUntilDue)}</span>
-                            </span>
-                          )}
-                          
-                          <span className="text-xs text-muted">
-                            Created: {new Date(task.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Action Buttons (Mark as Done, Edit, Delete - UNCHANGED) */}
-                    <div className="flex space-x-2 ml-6">
-                      {task.status !== 'DONE' && (
-                        <button
-                          onClick={() => handleMarkAsDone(task.id)}
-                          className="bg-gray-100 text-gray-500 p-2 rounded-full text-sm hover:bg-green-100 hover:text-green-600 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 transition-all duration-200 hover:scale-110 flex items-center justify-center"
-                          title="Mark as done"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => router.push(`/tasks/edit/${task.id}`)}
-                        className="bg-blue-100 text-blue-600 p-2 rounded-full text-sm hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-110"
-                        title="Edit task"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(task.id)}
-                        className="bg-red-100 text-red-600 p-2 rounded-full text-sm hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50 transition-all duration-200 hover:scale-110"
-                        title="Delete task"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {filteredAndSortedTasks.map((task: Task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                isSelected={selectedTasks.has(task.id)}
+                onToggleSelection={toggleTaskSelection}
+                onMarkAsDone={handleMarkAsDone}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
           </div>
         )}
       </div>

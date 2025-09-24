@@ -4,13 +4,113 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// TypeScript Interfaces
+interface SessionUser {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+}
+
+interface CategoryRelation {
+  category: {
+    id: string;
+    name: string;
+    color?: string | null;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+}
+
+interface TaskWithCategories {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  dueDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  categories: CategoryRelation[];
+}
+
+interface TransformedTask {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  categories: {
+    id: string;
+    name: string;
+    color?: string | null;
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
+}
+
+interface TaskCreateData {
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  dueDate?: string;
+  categoryIds?: string[];
+}
+
+// Import Prisma transaction type
+import type { PrismaClient } from '@prisma/client';
+
+// Type Guards
+function isSessionUser(user: any): user is SessionUser {
+  return user && typeof user.id === 'string';
+}
+
+function isValidTaskCreateData(data: any): data is TaskCreateData {
+  return data && typeof data.title === 'string';
+}
+
+function isTaskWithCategories(task: any): task is TaskWithCategories {
+  return task && typeof task.id === 'string' && Array.isArray(task.categories);
+}
+
+// Helper function to transform task data
+function transformTask(task: TaskWithCategories): TransformedTask {
+  return {
+    ...task,
+    dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+    createdAt: task.createdAt.toISOString(),
+    updatedAt: task.updatedAt.toISOString(),
+    categories: task.categories.map((tc: CategoryRelation) => ({
+      ...tc.category,
+      createdAt: tc.category.createdAt.toISOString(),
+      updatedAt: tc.category.updatedAt.toISOString(),
+    })),
+  };
+}
+
 // GET - Fetch all tasks for the current user WITH CATEGORIES
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.id) {
+    if (!session?.user || !isSessionUser(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Generate cache key for ETag
+    const cacheKey = `${session.user.id}-tasks`;
+    
+    // Check if client has cached version
+    const ifNoneMatch = request.headers.get('if-none-match');
+    if (ifNoneMatch === cacheKey) {
+      return new NextResponse(null, { status: 304 });
     }
 
     const tasks = await prisma.task.findMany({
@@ -20,7 +120,16 @@ export async function GET(request: NextRequest) {
       include: {
         categories: {
           include: {
-            category: true
+            category: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+                userId: true,
+                createdAt: true,
+                updatedAt: true,
+              }
+            }
           }
         }
       },
@@ -29,19 +138,24 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Transform the data to include categories directly
-    const tasksWithCategories = tasks.map((task: any) => ({
-      ...task,
-      categories: task.categories.map((tc: any) => tc.category),
-      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString()
-    }));
+    // Type-safe transformation
+    const tasksWithCategories: TransformedTask[] = tasks.map((task: TaskWithCategories) => 
+      transformTask(task)
+    );
+
+    const response = NextResponse.json({ tasks: tasksWithCategories });
     
-    return NextResponse.json({ tasks: tasksWithCategories });
+    // Set cache headers
+    response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=30');
+    response.headers.set('ETag', cacheKey);
+    
+    return response;
   } catch (error) {
     console.error("Error fetching tasks:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" }, 
+      { status: 500 }
+    );
   }
 }
 
@@ -50,52 +164,41 @@ export async function POST(request: NextRequest) {
   try {
     console.log("API: Task creation request received");
     
-    // Check if we can get a session
-    let session;
-    try {
-      session = await getServerSession(authOptions);
-      console.log("API: Session:", session);
-      console.log("API: User ID from session:", session?.user?.id);
-    } catch (sessionError) {
-      console.error("API: Session error:", sessionError);
-      return NextResponse.json({ error: "Session error" }, { status: 500 });
-    }
-
-    if (!session?.user) {
-      console.log("API: Unauthorized - no session");
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user || !isSessionUser(session.user)) {
+      console.log("API: Unauthorized - no valid session");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // DEBUG: Check if user ID exists in session
-    if (!session.user.id) {
-      console.log("API: ERROR - No user ID in session object");
-      console.log("API: Full session object:", JSON.stringify(session, null, 2));
-      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 });
-    }
-
-    // Parse request body
-    let body;
+    let body: unknown;
     try {
       body = await request.json();
-      console.log("API: Request body:", body);
     } catch (parseError) {
       console.error("API: JSON parse error:", parseError);
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
+    if (!isValidTaskCreateData(body)) {
+      return NextResponse.json({ error: "Invalid task data" }, { status: 400 });
+    }
+
     const { title, description, status, priority, dueDate, categoryIds = [] } = body;
 
     // Validate required fields
-    if (!title) {
+    if (!title.trim()) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    // Validate categories belong to the user
-    if (categoryIds.length > 0) {
+    // Validate categories belong to the user if provided
+    if (Array.isArray(categoryIds) && categoryIds.length > 0) {
       const userCategories = await prisma.category.findMany({
         where: {
           id: { in: categoryIds },
           userId: session.user.id
+        },
+        select: {
+          id: true
         }
       });
 
@@ -107,59 +210,90 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create the task with categories
-    try {
-      const task = await prisma.task.create({
+    // Create the task with categories in a transaction for data consistency
+    const task = await prisma.$transaction(async (tx: PrismaClient) => {
+      const newTask = await tx.task.create({
         data: {
-          title,
-          description: description || "",
+          title: title.trim(),
+          description: description?.trim() || "",
           status: status || "TODO",
           priority: priority || "MEDIUM",
           dueDate: dueDate ? new Date(dueDate) : null,
-          user: {
-            connect: {
-              id: session.user.id,
-            },
-          },
-          categories: categoryIds.length > 0 ? {
-            create: categoryIds.map((categoryId: string) => ({
-              category: {
-                connect: {
-                  id: categoryId
-                }
-              }
-            }))
-          } : undefined
+          userId: session.user.id,
         },
         include: {
           categories: {
             include: {
-              category: true
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  color: true,
+                  userId: true,
+                  createdAt: true,
+                  updatedAt: true,
+                }
+              }
             }
           }
         }
       });
 
-      // Transform the response to include categories directly
-      const taskWithCategories = {
-        ...task,
-        categories: task.categories.map((tc: any) => tc.category),
-        dueDate: task.dueDate ? task.dueDate.toISOString() : null,
-        createdAt: task.createdAt.toISOString(),
-        updatedAt: task.updatedAt.toISOString()
-      };
+      // Create category relations if categories are provided
+      if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+        await tx.taskCategory.createMany({
+          data: categoryIds.map((categoryId: string) => ({
+            taskId: newTask.id,
+            categoryId: categoryId
+          }))
+        });
 
-      console.log("API: Task created successfully with categories:", taskWithCategories);
-      return NextResponse.json(taskWithCategories, { status: 201 });
-    } catch (dbError: any) {
-      console.error("API: Database error:", dbError);
-      return NextResponse.json({ error: "Database error: " + dbError.message }, { status: 500 });
+        // Fetch the task again with categories
+        const updatedTask = await tx.task.findUnique({
+          where: { id: newTask.id },
+          include: {
+            categories: {
+              include: {
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    color: true,
+                    userId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        if (!updatedTask) {
+          throw new Error("Failed to fetch created task");
+        }
+
+        return updatedTask;
+      }
+
+      return newTask;
+    });
+
+    if (!task || !isTaskWithCategories(task)) {
+      throw new Error("Failed to create task");
     }
 
-  } catch (error: any) {
+    const taskWithCategories = transformTask(task);
+    
+    console.log("API: Task created successfully with categories");
+    return NextResponse.json(taskWithCategories, { status: 201 });
+
+  } catch (error: unknown) {
     console.error("API: Unexpected error:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
-      { error: "Internal server error: " + error.message },
+      { error: `Internal server error: ${errorMessage}` },
       { status: 500 }
     );
   }
