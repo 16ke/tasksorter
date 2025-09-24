@@ -55,13 +55,19 @@ function isValidTaskUpdateData(data: any): data is TaskUpdateData {
   return data && typeof data === 'object';
 }
 
-// Generate ETag for caching
-function generateETag(task: any): string {
+// Generate ETag for caching - FIXED: Handle nullable priority
+function generateETag(task: {
+  id: string;
+  title: string;
+  status: string;
+  priority: string | null;
+  updatedAt: Date;
+}): string {
   const content = JSON.stringify({
     id: task.id,
     title: task.title,
     status: task.status,
-    priority: task.priority,
+    priority: task.priority || "MEDIUM", // Handle null case
     updatedAt: task.updatedAt.getTime()
   });
   return Buffer.from(content).toString('base64');
@@ -224,7 +230,7 @@ export async function PUT(
     }
 
     // Update the task with categories in a transaction for data consistency
-    const task = await prisma.$transaction(async (tx: typeof prisma) => {
+    const task = await prisma.$transaction(async (tx) => {
       // First delete all existing category connections
       await tx.taskCategory.deleteMany({
         where: {

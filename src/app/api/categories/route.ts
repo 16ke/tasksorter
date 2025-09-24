@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { PrismaClient } from '@prisma/client';
 
 // TypeScript Interfaces
 interface SessionUser {
@@ -89,7 +88,7 @@ export async function GET(request: NextRequest) {
     const categories = await prisma.category.findMany({
       where: {
         user: {
-          email: session.user.email,
+          email: session.user.email || undefined, // FIX: Added || undefined
         },
       },
       select: {
@@ -162,11 +161,11 @@ export async function POST(request: NextRequest) {
 
     const { name, color } = body;
 
-    // Use transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx: PrismaClient) => {
+    // Use transaction to ensure data consistency - FIXED: Removed explicit PrismaClient type
+    const result = await prisma.$transaction(async (tx) => {
       // Get user with only necessary fields
       const user = await tx.user.findUnique({
-        where: { email: session.user.email },
+        where: { email: session.user.email || undefined }, // FIX: Added || undefined
         select: { id: true },
       });
 
@@ -194,7 +193,7 @@ export async function POST(request: NextRequest) {
       return category;
     });
 
-    // Transform response with taskCount
+    // Transform response with taskCount - FIXED: result is not an array
     const categoryWithTaskCount: TransformedCategory = {
       id: result.id,
       name: result.name,

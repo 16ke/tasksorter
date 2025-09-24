@@ -25,7 +25,7 @@ interface CategoryRelation {
 interface TaskWithCategories {
   id: string;
   title: string;
-  description: string;
+  description: string | null; // FIXED: Changed from string to string | null
   status: string;
   priority: string;
   dueDate: Date | null;
@@ -38,7 +38,7 @@ interface TaskWithCategories {
 interface TransformedTask {
   id: string;
   title: string;
-  description: string;
+  description: string | null; // FIXED: Changed from string to string | null
   status: string;
   priority: string;
   dueDate: string | null;
@@ -64,9 +64,6 @@ interface TaskCreateData {
   categoryIds?: string[];
 }
 
-// Import Prisma transaction type
-import type { PrismaClient } from '@prisma/client';
-
 // Type Guards
 function isSessionUser(user: any): user is SessionUser {
   return user && typeof user.id === 'string';
@@ -84,6 +81,7 @@ function isTaskWithCategories(task: any): task is TaskWithCategories {
 function transformTask(task: TaskWithCategories): TransformedTask {
   return {
     ...task,
+    description: task.description, // FIXED: Keep as string | null
     dueDate: task.dueDate ? task.dueDate.toISOString() : null,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
@@ -138,9 +136,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Type-safe transformation
-    const tasksWithCategories: TransformedTask[] = tasks.map((task: TaskWithCategories) => 
-      transformTask(task)
+    // Type-safe transformation - FIXED: Added proper type assertion
+    const tasksWithCategories: TransformedTask[] = tasks.map((task: any) => 
+      transformTask(task as TaskWithCategories)
     );
 
     const response = NextResponse.json({ tasks: tasksWithCategories });
@@ -210,8 +208,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create the task with categories in a transaction for data consistency
-    const task = await prisma.$transaction(async (tx: PrismaClient) => {
+    // FIXED: Simplified transaction without explicit PrismaClient type
+    const task = await prisma.$transaction(async (tx) => {
       const newTask = await tx.task.create({
         data: {
           title: title.trim(),
@@ -279,11 +277,12 @@ export async function POST(request: NextRequest) {
       return newTask;
     });
 
-    if (!task || !isTaskWithCategories(task)) {
+    if (!task) {
       throw new Error("Failed to create task");
     }
 
-    const taskWithCategories = transformTask(task);
+    // FIXED: Remove the type guard and use direct transformation
+    const taskWithCategories = transformTask(task as TaskWithCategories);
     
     console.log("API: Task created successfully with categories");
     return NextResponse.json(taskWithCategories, { status: 201 });

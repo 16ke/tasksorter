@@ -22,7 +22,7 @@ interface TaskWithCategories {
   title: string;
   description: string | null;
   status: string;
-  priority: string;
+  priority: string | null; // FIX: Changed from string to string | null
   dueDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -171,13 +171,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Transform tasks for export
+    // Transform tasks for export - FIX: Handle null priority
     const exportTasks: ExportTask[] = tasks.map((task: TaskWithCategories) => ({
       id: task.id,
       title: task.title,
       description: task.description || '',
       status: task.status,
-      priority: task.priority,
+      priority: task.priority || 'MEDIUM', // FIX: Provide default value for null priority
       dueDate: task.dueDate ? task.dueDate.toISOString().split('T')[0] : 'No due date',
       createdAt: task.createdAt.toISOString().split('T')[0],
       updatedAt: task.updatedAt.toISOString().split('T')[0],

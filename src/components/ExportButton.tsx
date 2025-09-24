@@ -1,4 +1,3 @@
-// src/components/ExportButton.tsx
 'use client';
 
 import { useState } from 'react';
@@ -123,14 +122,14 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 border border-gold-lg font-body"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         Export Tasks
         {selectedTaskIds.length > 0 && (
-          <span className="bg-green-800 text-white text-xs px-2 py-1 rounded-full">
+          <span className="bg-green-800 text-white text-xs px-2 py-1 rounded-full border border-gold">
             {selectedTaskIds.length}
           </span>
         )}
@@ -138,12 +137,12 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card border border-theme rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 text-foreground">Export Tasks</h3>
+          <div className="bg-card border-gold-lg rounded-lg p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-lg font-semibold mb-4 text-foreground font-elegant">Export Tasks</h3>
             
             {/* Export Preview */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-              <div className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 border-gold-lg">
+              <div className="text-sm text-blue-800 dark:text-blue-200 font-medium font-body">
                 {getExportPreviewText()}
               </div>
             </div>
@@ -151,7 +150,7 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
             <div className="space-y-4">
               {/* Export Method Selection */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2 font-body">
                   What to Export
                 </label>
                 <div className="space-y-2">
@@ -162,9 +161,9 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
                       checked={filters.exportMethod === 'selected'}
                       onChange={(e) => setFilters({ ...filters, exportMethod: e.target.value as 'selected' })}
                       disabled={selectedTaskIds.length === 0}
-                      className="text-[var(--turquoise-500)] focus:ring-[var(--turquoise-500)] bg-card border-theme"
+                      className="text-[var(--turquoise-500)] focus:ring-[var(--turquoise-500)] bg-card border-gold-lg"
                     />
-                    <span className={`text-sm ${selectedTaskIds.length === 0 ? 'text-muted' : 'text-foreground'}`}>
+                    <span className={`text-sm ${selectedTaskIds.length === 0 ? 'text-muted' : 'text-foreground'} font-body`}>
                       Selected tasks ({selectedTaskIds.length} selected)
                     </span>
                   </label>
@@ -175,9 +174,9 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
                       value="filtered"
                       checked={filters.exportMethod === 'filtered'}
                       onChange={(e) => setFilters({ ...filters, exportMethod: e.target.value as 'filtered' })}
-                      className="text-[var(--turquoise-500)] focus:ring-[var(--turquoise-500)] bg-card border-theme"
+                      className="text-[var(--turquoise-500)] focus:ring-[var(--turquoise-500)] bg-card border-gold-lg"
                     />
-                    <span className="text-sm text-foreground">
+                    <span className="text-sm text-foreground font-body">
                       Tasks matching current filters
                     </span>
                   </label>
@@ -188,9 +187,9 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
                       value="all"
                       checked={filters.exportMethod === 'all'}
                       onChange={(e) => setFilters({ ...filters, exportMethod: e.target.value as 'all' })}
-                      className="text-[var(--turquoise-500)] focus:ring-[var(--turquoise-500)] bg-card border-theme"
+                      className="text-[var(--turquoise-500)] focus:ring-[var(--turquoise-500)] bg-card border-gold-lg"
                     />
-                    <span className="text-sm text-foreground">
+                    <span className="text-sm text-foreground font-body">
                       All tasks ({totalTasksCount} total)
                     </span>
                   </label>
@@ -199,13 +198,13 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
 
               {/* Format Selection */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1 font-body">
                   Format
                 </label>
                 <select
                   value={filters.format}
                   onChange={(e) => setFilters({ ...filters, format: e.target.value as 'json' | 'csv' })}
-                  className="w-full p-2 border border-theme rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent"
+                  className="w-full p-2 rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent border-gold-lg font-body"
                 >
                   <option value="csv">CSV (Excel compatible)</option>
                   <option value="json">JSON (Developer friendly)</option>
@@ -216,13 +215,13 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
               {filters.exportMethod === 'filtered' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1 font-body">
                       Status Filter
                     </label>
                     <select
                       value={filters.status}
                       onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                      className="w-full p-2 border border-theme rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent"
+                      className="w-full p-2 rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent border-gold-lg font-body"
                     >
                       <option value="ALL">All Statuses</option>
                       <option value="TODO">To Do</option>
@@ -232,13 +231,13 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1 font-body">
                       Priority Filter
                     </label>
                     <select
                       value={filters.priority}
                       onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                      className="w-full p-2 border border-theme rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent"
+                      className="w-full p-2 rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent border-gold-lg font-body"
                     >
                       <option value="ALL">All Priorities</option>
                       <option value="LOW">Low</option>
@@ -250,25 +249,25 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1 font-body">
                         Start Date
                       </label>
                       <input
                         type="date"
                         value={filters.startDate}
                         onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                        className="w-full p-2 border border-theme rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent"
+                        className="w-full p-2 rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent border-gold-lg font-body"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1 font-body">
                         End Date
                       </label>
                       <input
                         type="date"
                         value={filters.endDate}
                         onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                        className="w-full p-2 border border-theme rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent"
+                        className="w-full p-2 rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:border-transparent border-gold-lg font-body"
                       />
                     </div>
                   </div>
@@ -280,13 +279,13 @@ export default function ExportButton({ currentFilters, selectedTaskIds = [], tot
               <button
                 onClick={handleExport}
                 disabled={isExporting || (filters.exportMethod === 'selected' && selectedTaskIds.length === 0)}
-                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium border border-gold-lg font-body"
               >
                 {isExporting ? 'Exporting...' : 'Export'}
               </button>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-800 dark:text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium"
+                className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-800 dark:text-white py-2 px-4 rounded-md transition-colors duration-200 font-medium border border-gold-lg font-body"
               >
                 Cancel
               </button>

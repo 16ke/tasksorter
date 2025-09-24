@@ -73,13 +73,13 @@ function NotificationWidget({ tasks }: { tasks: Task[] }) {
 
   if (totalAlerts === 0) {
     return (
-      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 border-gold p-4 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-green-800 dark:text-green-200">🎉 All caught up!</p>
-            <p className="text-sm text-green-600 dark:text-green-300">No urgent tasks or due dates</p>
+            <p className="font-semibold text-green-800 dark:text-green-200 font-elegant">🎉 All caught up!</p>
+            <p className="text-sm text-green-600 dark:text-green-300 font-body">No urgent tasks or due dates</p>
           </div>
-          <span className="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
+          <span className="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium border-gold">
             {activeTasks.length} active
           </span>
         </div>
@@ -88,32 +88,32 @@ function NotificationWidget({ tasks }: { tasks: Task[] }) {
   }
 
   return (
-    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg">
+    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 border-gold p-4 rounded-lg">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-bold text-orange-800 dark:text-orange-200 flex items-center">
-          <span className="mr-2">🚨</span>
+        <h3 className="font-bold text-orange-800 dark:text-orange-200 flex items-center font-elegant">
+          <span className="mr-2">🏺</span>
           Task Alerts
         </h3>
-        <span className="bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-200 px-2 py-1 rounded-full text-xs font-medium">
+        <span className="bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-200 px-2 py-1 rounded-full text-xs font-medium border-gold">
           {totalAlerts} alert{totalAlerts !== 1 ? 's' : ''}
         </span>
       </div>
       
-      <div className="space-y-1 text-sm">
+      <div className="space-y-1 text-sm font-body">
         {overdueTasks.length > 0 && (
-          <p className="text-red-600 dark:text-red-300">📅 {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}</p>
+          <p className="text-red-600 dark:text-red-300">⏳ {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}</p>
         )}
         {dueTodayTasks.length > 0 && (
-          <p className="text-orange-600 dark:text-orange-300">⏰ {dueTodayTasks.length} due today</p>
+          <p className="text-orange-600 dark:text-orange-300">🔔 {dueTodayTasks.length} due today</p>
         )}
         {urgentTasks.length > 0 && (
-          <p className="text-purple-600 dark:text-purple-300">⚠️ {urgentTasks.length} urgent task{urgentTasks.length !== 1 ? 's' : ''}</p>
+          <p className="text-purple-600 dark:text-purple-300">⚡ {urgentTasks.length} urgent task{urgentTasks.length !== 1 ? 's' : ''}</p>
         )}
       </div>
       
       <Link 
         href="/notifications"
-        className="block mt-3 text-center bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-700 py-1 rounded text-sm font-medium transition-colors"
+        className="block mt-3 text-center bg-orange-100 dark:bg-orange-800 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-700 py-1 rounded text-sm font-medium transition-colors border-gold"
       >
         View Details
       </Link>
@@ -146,25 +146,25 @@ export default async function Home() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full space-y-6">
           {/* Welcome Card */}
-          <div className="bg-card rounded-xl shadow-lg p-6 border-theme">
+          <div className="bg-card rounded-xl shadow-lg p-6 border-gold-lg">
             <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent font-elegant">
                 Welcome back!
               </h1>
-              <p className="mt-2 text-muted">
+              <p className="mt-2 text-muted font-body">
                 Hello, {session.user?.name || session.user?.email}!
               </p>
             </div>
             
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-[var(--turquoise-500)] to-[var(--turquoise-600)] text-white p-4 rounded-lg text-center">
-                <p className="text-2xl font-bold">{pendingTaskCount}</p>
-                <p className="text-sm opacity-90">Pending</p>
+              <div className="bg-gradient-to-br from-[var(--turquoise-500)] to-[var(--turquoise-600)] text-white p-4 rounded-lg text-center border-gold">
+                <p className="text-2xl font-bold font-elegant">{pendingTaskCount}</p>
+                <p className="text-sm opacity-90 font-body">Pending</p>
               </div>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-lg text-center">
-                <p className="text-2xl font-bold">{completedTaskCount}</p>
-                <p className="text-sm opacity-90">Completed</p>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-lg text-center border-gold">
+                <p className="text-2xl font-bold font-elegant">{completedTaskCount}</p>
+                <p className="text-sm opacity-90 font-body">Completed</p>
               </div>
             </div>
 
@@ -175,21 +175,21 @@ export default async function Home() {
             <div className="space-y-3 mt-6">
               <Link
                 href="/tasks"
-                className="w-full bg-gradient-to-r from-[var(--turquoise-500)] to-[var(--turquoise-600)] text-white py-3 px-4 rounded-lg hover:from-[var(--turquoise-600)] hover:to-[var(--turquoise-700)] focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-to-r from-[var(--turquoise-500)] to-[var(--turquoise-600)] text-white py-3 px-4 rounded-lg hover:from-[var(--turquoise-600)] hover:to-[var(--turquoise-700)] focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl border-gold-md font-body"
               >
-                📋 View All Tasks
+                📜 View All Tasks
               </Link>
               
               <Link
                 href="/tasks/new"
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl border-gold-md font-body"
               >
-                ➕ Create New Task
+                ✍️ Create New Task
               </Link>
 
               <Link
                 href="/notifications"
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl border-gold-md font-body"
               >
                 🔔 Notifications Center
               </Link>
@@ -197,7 +197,7 @@ export default async function Home() {
           </div>
 
           {/* Quick Stats Footer */}
-          <div className="text-center text-sm text-muted">
+          <div className="text-center text-sm text-muted font-body">
             <p>You have {allTasks.length} total tasks • {Math.round((completedTaskCount / allTasks.length) * 100) || 0}% completed</p>
           </div>
         </div>
@@ -207,35 +207,35 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8 bg-card rounded-xl shadow-lg p-8 border-theme">
+      <div className="max-w-md w-full space-y-8 bg-card rounded-xl shadow-lg p-8 border-gold-lg">
         <div className="text-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent">
-            TaskSorter
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent font-elegant">
+            Vezir
           </h1>
-          <p className="mt-2 text-muted text-lg">
-            Your intelligent task management solution
+          <p className="mt-2 text-muted text-lg font-body">
+            Your sagacious task management advisor
           </p>
         </div>
         
         <div className="space-y-4">
           <Link
             href="/login"
-            className="w-full bg-gradient-to-r from-[var(--turquoise-500)] to-[var(--turquoise-600)] text-white py-3 px-4 rounded-lg hover:from-[var(--turquoise-600)] hover:to-[var(--turquoise-700)] focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+            className="w-full bg-gradient-to-r from-[var(--turquoise-500)] to-[var(--turquoise-600)] text-white py-3 px-4 rounded-lg hover:from-[var(--turquoise-600)] hover:to-[var(--turquoise-700)] focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl border-gold-md font-body"
           >
-            🔐 Sign In
+            🗝️ Sign In
           </Link>
           
           <Link
             href="/register"
-            className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 block text-center transition-all duration-200 font-medium shadow-lg hover:shadow-xl border-gold-md font-body"
           >
-            🚀 Create Account
+            🏛️ Create Account
           </Link>
         </div>
 
-        <div className="text-center text-sm text-muted space-y-2">
+        <div className="text-center text-sm text-muted space-y-2 font-body">
           <p className="flex items-center justify-center space-x-2">
-            <span>📅</span>
+            <span>📜</span>
             <span>Smart due date tracking</span>
           </p>
           <p className="flex items-center justify-center space-x-2">
@@ -243,7 +243,7 @@ export default async function Home() {
             <span>Category organization</span>
           </p>
           <p className="flex items-center justify-center space-x-2">
-            <span>🚨</span>
+            <span>🏺</span>
             <span>Priority notifications</span>
           </p>
         </div>

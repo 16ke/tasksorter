@@ -54,7 +54,7 @@ export async function GET(
       where: {
         id: categoryId,
         user: {
-          email: session.user.email
+          email: session.user.email || undefined // FIX: Added || undefined
         }
       },
       select: {
@@ -139,7 +139,7 @@ export async function PUT(
         where: {
           id: categoryId,
           user: {
-            email: session.user.email
+            email: session.user.email || undefined // FIX: Added || undefined
           }
         }
       });
@@ -216,7 +216,7 @@ export async function DELETE(
         where: {
           id: categoryId,
           user: {
-            email: session.user.email
+            email: session.user.email || undefined // FIX: Added || undefined
           }
         }
       });

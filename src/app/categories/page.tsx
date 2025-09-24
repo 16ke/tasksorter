@@ -1,4 +1,3 @@
-// src/app/categories/page.tsx - ENHANCED WITH TASK COUNTS
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,7 +11,7 @@ interface Category {
   userId: string;
   createdAt: string;
   updatedAt: string;
-  taskCount: number; // Added task count
+  taskCount: number;
 }
 
 export default function CategoriesPage() {
@@ -61,7 +60,7 @@ export default function CategoriesPage() {
       if (response.ok) {
         setNewCategoryName("");
         setNewCategoryColor("#3b82f6");
-        fetchCategories(); // Refresh the list
+        fetchCategories();
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error || "Failed to create category"}`);
@@ -104,7 +103,7 @@ export default function CategoriesPage() {
             <div className="h-8 bg-gray-300 rounded w-1/4 mb-4"></div>
             <div className="grid gap-4">
               {[1, 2, 3].map(n => (
-                <div key={n} className="h-16 bg-gray-200 rounded"></div>
+                <div key={n} className="h-16 bg-gray-200 rounded border-gold-lg"></div>
               ))}
             </div>
           </div>
@@ -118,20 +117,20 @@ export default function CategoriesPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <Link href="/tasks" className="text-[var(--turquoise-600)] hover:underline">
+            <Link href="/tasks" className="text-[var(--turquoise-600)] hover:underline font-body">
               &larr; Back to Tasks
             </Link>
-            <h1 className="text-3xl font-bold mt-2 text-foreground">Manage Categories</h1>
-            <p className="text-muted mt-1">Organize your tasks with custom categories</p>
+            <h1 className="text-3xl font-bold mt-2 bg-gradient-to-r from-blue-300 to-blue-500 bg-clip-text text-transparent font-elegant">Manage Categories</h1>
+            <p className="text-white mt-1 font-body">Organize your tasks with custom categories</p>
           </div>
         </div>
 
-        <div className="bg-card p-6 rounded-xl shadow-lg mb-8 border-theme">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">Create New Category</h2>
+        <div className="bg-card p-6 rounded-xl shadow-lg mb-8 border-gold-lg">
+          <h2 className="text-xl font-semibold mb-4 text-foreground font-elegant">Create New Category</h2>
           <form onSubmit={handleCreateCategory} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label htmlFor="categoryName" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="categoryName" className="block text-sm font-medium text-foreground mb-2 font-body">
                   Category Name
                 </label>
                 <input
@@ -140,13 +139,13 @@ export default function CategoriesPage() {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="e.g., Work, Personal, Urgent"
-                  className="w-full px-3 py-2 border-theme rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] bg-card text-foreground"
+                  className="w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--turquoise-500)] bg-card text-foreground border-gold-lg font-body"
                   required
                 />
               </div>
               
               <div>
-                <label htmlFor="categoryColor" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="categoryColor" className="block text-sm font-medium text-foreground mb-2 font-body">
                   Color
                 </label>
                 <div className="flex items-center space-x-3">
@@ -155,9 +154,9 @@ export default function CategoriesPage() {
                     id="categoryColor"
                     value={newCategoryColor}
                     onChange={(e) => setNewCategoryColor(e.target.value)}
-                    className="w-12 h-12 border-theme rounded cursor-pointer"
+                    className="w-12 h-12 rounded cursor-pointer border-gold-lg"
                   />
-                  <span className="text-sm text-muted">{newCategoryColor}</span>
+                  <span className="text-sm text-muted font-body">{newCategoryColor}</span>
                 </div>
               </div>
             </div>
@@ -165,42 +164,42 @@ export default function CategoriesPage() {
             <button
               type="submit"
               disabled={isCreating || !newCategoryName.trim()}
-              className="bg-gradient-to-r from-[var(--turquoise-600)] to-purple-600 text-white px-6 py-2 rounded-md hover:from-[var(--turquoise-700)] hover:to-purple-700 disabled:opacity-50 transition-colors"
+              className="bg-gradient-to-r from-[var(--turquoise-600)] to-purple-600 text-white px-6 py-2 rounded-md hover:from-[var(--turquoise-700)] hover:to-purple-700 disabled:opacity-50 transition-colors border border-gold-lg font-body"
             >
               {isCreating ? "Creating..." : "Create Category"}
             </button>
           </form>
         </div>
 
-        <div className="bg-card p-6 rounded-xl shadow-lg border-theme">
-          <h2 className="text-xl font-semibold mb-4 text-foreground">
+        <div className="bg-card p-6 rounded-xl shadow-lg border-gold-lg">
+          <h2 className="text-xl font-semibold mb-4 text-foreground font-elegant">
             Your Categories ({categories.length})
           </h2>
           
           {categories.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-6xl mb-4">🏷️</div>
-              <p className="text-muted text-lg">No categories yet. Create your first one above!</p>
+              <p className="text-muted text-lg font-body">No categories yet. Create your first one above!</p>
             </div>
           ) : (
             <div className="grid gap-3">
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center justify-between p-4 border-theme rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center justify-between p-4 rounded-lg hover:bg-surface transition-colors border-gold-lg"
                 >
                   <div className="flex items-center space-x-4">
                     <div
-                      className="w-4 h-4 rounded-full"
+                      className="w-4 h-4 rounded-full border border-gold-lg"
                       style={{ backgroundColor: category.color }}
                     ></div>
                     <div>
-                      <span className="font-medium text-foreground block">{category.name}</span>
+                      <span className="font-medium text-foreground block font-body">{category.name}</span>
                       <div className="flex items-center space-x-4 mt-1">
-                        <span className="text-sm text-muted" style={{ color: category.color }}>
+                        <span className="text-sm text-muted font-body" style={{ color: category.color }}>
                           {category.color}
                         </span>
-                        <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full text-foreground">
+                        <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full text-foreground border border-gold-lg font-body">
                           {category.taskCount} task{category.taskCount !== 1 ? 's' : ''}
                         </span>
                       </div>
@@ -210,7 +209,7 @@ export default function CategoriesPage() {
                   <button
                     onClick={() => handleDeleteCategory(category.id)}
                     disabled={category.taskCount > 0}
-                    className={`p-2 transition-colors ${
+                    className={`p-2 transition-colors border border-gold-lg rounded ${
                       category.taskCount > 0 
                         ? 'text-gray-400 cursor-not-allowed' 
                         : 'text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300'
@@ -233,23 +232,23 @@ export default function CategoriesPage() {
 
         {/* Quick Stats */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-card p-4 rounded-lg border-theme text-center">
-            <div className="text-2xl font-bold text-[var(--turquoise-600)]">
+          <div className="bg-card p-4 rounded-lg border-gold-lg text-center">
+            <div className="text-2xl font-bold text-[var(--turquoise-600)] font-elegant">
               {categories.length}
             </div>
-            <div className="text-sm text-muted">Total Categories</div>
+            <div className="text-sm text-muted font-body">Total Categories</div>
           </div>
-          <div className="bg-card p-4 rounded-lg border-theme text-center">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="bg-card p-4 rounded-lg border-gold-lg text-center">
+            <div className="text-2xl font-bold text-purple-600 font-elegant">
               {categories.filter(cat => cat.taskCount > 0).length}
             </div>
-            <div className="text-sm text-muted">Categories in Use</div>
+            <div className="text-sm text-muted font-body">Categories in Use</div>
           </div>
-          <div className="bg-card p-4 rounded-lg border-theme text-center">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-card p-4 rounded-lg border-gold-lg text-center">
+            <div className="text-2xl font-bold text-green-600 font-elegant">
               {categories.reduce((total, cat) => total + cat.taskCount, 0)}
             </div>
-            <div className="text-sm text-muted">Total Task Assignments</div>
+            <div className="text-sm text-muted font-body">Total Task Assignments</div>
           </div>
         </div>
       </div>

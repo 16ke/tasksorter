@@ -71,55 +71,75 @@ export default function Navigation() {
   return (
     <nav>
       <ul className="flex space-x-6 items-center">
-        <li><Link href="/" className="hover:underline">Home</Link></li>
-        <li><Link href="/tasks" className="hover:underline">My Tasks</Link></li>
+        <li>
+          <Link href="/" className="hover:underline font-elegant font-medium text-lg transition-all duration-200 hover:text-gold-200">
+            Home
+          </Link>
+        </li>
+        <li>
+          <Link href="/tasks" className="hover:underline font-elegant font-medium text-lg transition-all duration-200 hover:text-gold-200">
+            My Tasks
+          </Link>
+        </li>
         
         {session ? (
           <>
-            <li><Link href="/categories" className="hover:underline">Categories</Link></li>
+            <li>
+              <Link href="/categories" className="hover:underline font-elegant font-medium text-lg transition-all duration-200 hover:text-gold-200">
+                Categories
+              </Link>
+            </li>
             
-            {/* Notifications Link with Badge */}
+            {/* Notifications Link with Badge - ACTUAL horn icon */}
             <li className="relative">
               <Link 
                 href="/notifications" 
-                className="hover:underline flex items-center space-x-1 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                className="hover:underline flex items-center space-x-2 p-2 rounded-lg hover:bg-white/10 transition-all duration-200 group border-gold border-opacity-0 hover:border-opacity-50"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-6.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                {/* ACTUAL horn icon - simple and recognizable */}
+                <svg className="w-5 h-5 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                 </svg>
-                <span>Alerts</span>
+                <span className="font-elegant font-medium">Alerts</span>
                 {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse shadow-gold">
                     {notificationCount > 9 ? '9+' : notificationCount}
                   </span>
                 )}
               </Link>
             </li>
             
+            {/* Dark Mode Toggle with PROPER sun/moon icons */}
             <li>
               <button
                 onClick={toggleDarkMode}
-                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200 border-gold border-opacity-0 hover:border-opacity-50"
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? (
-                  <svg className="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                  // ACTUAL sun icon - clear and recognizable
+                  <svg className="w-5 h-5 text-gold-300 transform hover:rotate-45 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-blue-100" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  // ACTUAL moon icon - clear and recognizable
+                  <svg className="w-5 h-5 text-blue-100 transform hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                 )}
               </button>
             </li>
-            <li className="text-sm bg-white/20 px-3 py-1 rounded">
+            
+            {/* User greeting with elegant styling */}
+            <li className="text-sm bg-white/20 px-3 py-1 rounded border-gold font-elegant">
               Hello, {session.user?.name}
             </li>
+            
+            {/* Logout button with gold accents */}
             <li>
               <button 
                 onClick={() => signOut()}
-                className="bg-white text-[var(--turquoise-600)] px-3 py-1 rounded text-sm hover:bg-gray-100"
+                className="bg-white text-[var(--turquoise-600)] px-4 py-2 rounded text-sm hover:bg-gold-50 transition-all duration-200 border-gold hover:border-gold-md shadow-gold hover:shadow-gold-lg font-elegant font-medium"
               >
                 Logout
               </button>
@@ -129,7 +149,7 @@ export default function Navigation() {
           <li>
             <Link 
               href="/login" 
-              className="hover:underline bg-white text-[var(--turquoise-600)] px-3 py-1 rounded text-sm"
+              className="hover:underline bg-white text-[var(--turquoise-600)] px-4 py-2 rounded text-sm transition-all duration-200 hover:bg-gold-50 border-gold hover:border-gold-md shadow-gold hover:shadow-gold-lg font-elegant font-medium"
             >
               Login
             </Link>
