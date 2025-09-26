@@ -23,6 +23,14 @@ export default withAuth(
             req.nextUrl.pathname === "/") {
           return true; // Allow access to these routes regardless of auth status
         }
+        
+        // Allow access to specific SVG files in public folder
+        if (req.nextUrl.pathname === "/vezir.svg" ||
+            req.nextUrl.pathname === "/vezir-inverted.svg" ||
+            req.nextUrl.pathname === "/vezir-favicon.svg") {
+          return true;
+        }
+        
         return !!token; // Require auth for all other routes
       },
     },

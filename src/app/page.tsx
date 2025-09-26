@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Task } from "@/types/task";
+import LargeLogo from "@/components/LargeLogo";
 
 // Server component to fetch task data for notifications
 async function getTaskData(userId: string) {
@@ -209,6 +210,8 @@ export default async function Home() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 bg-card rounded-xl shadow-lg p-8 border-gold-lg">
         <div className="text-center">
+          {/* Large Logo */}
+          <LargeLogo />
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--turquoise-500)] to-purple-600 bg-clip-text text-transparent font-elegant">
             Vezir
           </h1>
