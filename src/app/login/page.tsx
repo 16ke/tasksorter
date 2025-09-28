@@ -100,7 +100,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-muted font-body">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="text-[var(--turquoise-500)] hover:underline transition-colors font-body">
             🏛️ Sign up here
           </Link>

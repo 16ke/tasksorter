@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import Navigation from "@/components/Navigation";
@@ -19,7 +20,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Vezir - Task Manager App",
-  description: "A task management application that serves you faithfully",
+  description: "A task manager that serves you faithfully",
   icons: {
     icon: '/vezir-favicon.svg',
     shortcut: '/vezir-favicon.svg',
@@ -42,12 +43,12 @@ export default async function RootLayout({
           {session && (
             <header className="bg-[var(--turquoise-500)] text-white p-4 shadow-md">
               <div className="container mx-auto flex justify-between items-center">
-                <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                   <Logo />
                   <span className="text-3xl font-elegant font-bold tracking-tight">
                     Vezir
                   </span>
-                </a>
+                </Link>
                 <Navigation />
               </div>
             </header>
