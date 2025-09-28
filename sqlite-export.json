@@ -1,0 +1,103 @@
+{
+  "users": [
+    {
+      "id": "cmfsnw8020000rchclsbl4s1e",
+      "name": "Test User",
+      "email": "Test@example.com",
+      "emailVerified": null,
+      "image": null,
+      "hashedPassword": "$2b$12$8huAN0fIEa7qpjQFgsN73OSFjbM/Td58SAUW5IaOIAvEDEx9YPsUu",
+      "tasks": [
+        {
+          "id": "cmfsrua2t0001rc94sl49jw49",
+          "title": "Complete three days work in one day",
+          "description": "Do 3 days work in 1 day",
+          "status": "DONE",
+          "priority": null,
+          "dueDate": "2025-09-20T00:00:00.000Z",
+          "userId": "cmfsnw8020000rchclsbl4s1e",
+          "createdAt": "2025-09-20T21:19:20.454Z",
+          "updatedAt": "2025-09-21T13:54:57.137Z",
+          "categories": []
+        },
+        {
+          "id": "cmftybhxe0000rckklyiybi28",
+          "title": "Clean the floor",
+          "description": "Same as title",
+          "status": "IN_PROGRESS",
+          "priority": "LOW",
+          "dueDate": "2025-09-23T00:00:00.000Z",
+          "userId": "cmfsnw8020000rchclsbl4s1e",
+          "createdAt": "2025-09-21T17:08:27.649Z",
+          "updatedAt": "2025-09-22T18:40:14.054Z",
+          "categories": []
+        },
+        {
+          "id": "cmftzsrbe0000rcqwmpw9mbsx",
+          "title": "read book",
+          "description": "read 23 pages of the book",
+          "status": "IN_PROGRESS",
+          "priority": "MEDIUM",
+          "dueDate": "2025-09-22T00:00:00.000Z",
+          "userId": "cmfsnw8020000rchclsbl4s1e",
+          "createdAt": "2025-09-21T17:49:52.586Z",
+          "updatedAt": "2025-09-21T17:50:12.549Z",
+          "categories": []
+        },
+        {
+          "id": "cmftzumbj0001rcqw5lwlgi7v",
+          "title": "buy flour",
+          "description": "Just enough for 4 days worth of bread.",
+          "status": "IN_PROGRESS",
+          "priority": "HIGH",
+          "dueDate": null,
+          "userId": "cmfsnw8020000rchclsbl4s1e",
+          "createdAt": "2025-09-21T17:51:19.424Z",
+          "updatedAt": "2025-09-23T15:00:27.314Z",
+          "categories": []
+        },
+        {
+          "id": "cmfwqy72r0002rcm0pf65bfud",
+          "title": "Buy milk",
+          "description": "",
+          "status": "TODO",
+          "priority": "MEDIUM",
+          "dueDate": "2025-09-30T00:00:00.000Z",
+          "userId": "cmfsnw8020000rchclsbl4s1e",
+          "createdAt": "2025-09-23T16:05:28.275Z",
+          "updatedAt": "2025-09-23T16:05:28.275Z",
+          "categories": [
+            {
+              "id": "cmfwqy72r0003rcm0psr2db7c",
+              "taskId": "cmfwqy72r0002rcm0pf65bfud",
+              "categoryId": "cmfwqwj3p0001rcm01fsailt7",
+              "createdAt": "2025-09-23T16:05:28.275Z",
+              "category": {
+                "id": "cmfwqwj3p0001rcm01fsailt7",
+                "name": "Cooking",
+                "color": "#0dfd29",
+                "userId": "cmfsnw8020000rchclsbl4s1e",
+                "createdAt": "2025-09-23T16:04:10.547Z",
+                "updatedAt": "2025-09-23T16:04:10.547Z"
+              }
+            }
+          ]
+        }
+      ],
+      "categories": [
+        {
+          "id": "cmfwqwj3p0001rcm01fsailt7",
+          "name": "Cooking",
+          "color": "#0dfd29",
+          "userId": "cmfsnw8020000rchclsbl4s1e",
+          "createdAt": "2025-09-23T16:04:10.547Z",
+          "updatedAt": "2025-09-23T16:04:10.547Z"
+        }
+      ],
+      "accounts": [],
+      "sessions": []
+    }
+  ],
+  "verificationTokens": [],
+  "exportDate": "2025-09-28T20:31:58.499Z"
+}

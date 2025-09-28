@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"        
   url      = env("DATABASE_URL")
 }
 
@@ -55,52 +55,38 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Professional Task model with proper category relationships
 model Task {
   id          String   @id @default(cuid())
   title       String
   description String?
   status      String   @default("TODO")
-  priority    String?  // LOW, MEDIUM, HIGH, URGENT
+  priority    String?
   dueDate     DateTime?
-  
-  // Remove the old tags field - we're using proper categories now
   user        User     @relation(fields: [userId], references: [id])
   userId      String
-
-  // Many-to-many relationship with Categories
   categories  TaskCategory[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Category model for professional tagging system
 model Category {
   id          String   @id @default(cuid())
   name        String
-  color       String   @default("#3b82f6") // Default blue color
+  color       String   @default("#3b82f6")
   user        User     @relation(fields: [userId], references: [id])
   userId      String
-  
-  // Many-to-many relationship with Tasks
   tasks       TaskCategory[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([name, userId]) // Users can't have duplicate category names
+  @@unique([name, userId])
 }
 
-// Join table for many-to-many relationship between Task and Category
 model TaskCategory {
   id          String   @id @default(cuid())
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   taskId      String
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   categoryId  String
-
   createdAt DateTime @default(now())
-
-  @@unique([taskId, categoryId]) // Prevent duplicate assignments
+  @@unique([taskId, categoryId])
 }
