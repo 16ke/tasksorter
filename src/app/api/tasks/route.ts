@@ -25,7 +25,7 @@ interface CategoryRelation {
 interface TaskWithCategories {
   id: string;
   title: string;
-  description: string | null; // FIXED: Changed from string to string | null
+  description: string | null;
   status: string;
   priority: string;
   dueDate: Date | null;
@@ -38,7 +38,7 @@ interface TaskWithCategories {
 interface TransformedTask {
   id: string;
   title: string;
-  description: string | null; // FIXED: Changed from string to string | null
+  description: string | null;
   status: string;
   priority: string;
   dueDate: string | null;
@@ -65,23 +65,29 @@ interface TaskCreateData {
 }
 
 // Type Guards
-function isSessionUser(user: any): user is SessionUser {
-  return user && typeof user.id === 'string';
+function isSessionUser(user: unknown): user is SessionUser {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'id' in user &&
+    typeof (user as SessionUser).id === 'string'
+  );
 }
 
-function isValidTaskCreateData(data: any): data is TaskCreateData {
-  return data && typeof data.title === 'string';
-}
-
-function isTaskWithCategories(task: any): task is TaskWithCategories {
-  return task && typeof task.id === 'string' && Array.isArray(task.categories);
+function isValidTaskCreateData(data: unknown): data is TaskCreateData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'title' in data &&
+    typeof (data as TaskCreateData).title === 'string'
+  );
 }
 
 // Helper function to transform task data
 function transformTask(task: TaskWithCategories): TransformedTask {
   return {
     ...task,
-    description: task.description, // FIXED: Keep as string | null
+    description: task.description,
     dueDate: task.dueDate ? task.dueDate.toISOString() : null,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
@@ -136,8 +142,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Type-safe transformation - FIXED: Added proper type assertion
-    const tasksWithCategories: TransformedTask[] = tasks.map((task: any) => 
+    // Type-safe transformation
+    const tasksWithCategories: TransformedTask[] = tasks.map((task) => 
       transformTask(task as TaskWithCategories)
     );
 
