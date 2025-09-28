@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Category {
@@ -20,7 +19,6 @@ export default function CategoriesPage() {
   const [newCategoryColor, setNewCategoryColor] = useState("#3b82f6");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     fetchCategories();
