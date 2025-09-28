@@ -32,27 +32,22 @@ interface CategoryRelation {
   };
 }
 
-interface TaskWithCategories {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  dueDate: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
-  categories: CategoryRelation[];
-}
-
 // Type guard for session user
-function isSessionUser(user: any): user is SessionUser {
-  return user && typeof user.id === 'string';
+function isSessionUser(user: unknown): user is SessionUser {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'id' in user &&
+    typeof (user as SessionUser).id === 'string'
+  );
 }
 
 // Type guard for task update data
-function isValidTaskUpdateData(data: any): data is TaskUpdateData {
-  return data && typeof data === 'object';
+function isValidTaskUpdateData(data: unknown): data is TaskUpdateData {
+  return (
+    typeof data === 'object' &&
+    data !== null
+  );
 }
 
 // Generate ETag for caching - FIXED: Handle nullable priority
