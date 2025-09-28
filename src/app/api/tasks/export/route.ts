@@ -22,7 +22,7 @@ interface TaskWithCategories {
   title: string;
   description: string | null;
   status: string;
-  priority: string | null; // FIX: Changed from string to string | null
+  priority: string | null;
   dueDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -75,8 +75,13 @@ interface WhereClause {
 }
 
 // Type Guards
-function isSessionUser(user: any): user is SessionUser {
-  return user && typeof user.id === 'string';
+function isSessionUser(user: unknown): user is SessionUser {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'id' in user &&
+    typeof (user as SessionUser).id === 'string'
+  );
 }
 
 function isValidExportMethod(method: string | null): method is 'selected' | 'filtered' | 'all' {
@@ -88,7 +93,7 @@ function isValidFormat(format: string | null): format is 'csv' | 'json' {
 }
 
 // ETag generation helper
-function generateETag(data: any): string {
+function generateETag(data: unknown): string {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
