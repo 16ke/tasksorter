@@ -36,7 +36,7 @@ export default function RegisterPage() {
         const data = await response.json();
         setError(data.error || "Something went wrong");
       }
-    } catch (error) {
+    } catch {
       setError("Something went wrong");
     } finally {
       setIsLoading(false);
