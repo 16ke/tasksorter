@@ -1,8 +1,6 @@
 // src/types/next-auth.d.ts
 // This file tells TypeScript about our custom session properties.
 
-import NextAuth from "next-auth";
-
 declare module "next-auth" {
   interface Session {
     user: {
