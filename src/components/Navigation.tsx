@@ -4,6 +4,19 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 
+// Define proper TypeScript interfaces
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority?: string;
+  dueDate?: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function Navigation() {
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
@@ -28,10 +41,10 @@ export default function Navigation() {
           const response = await fetch('/api/tasks');
           if (response.ok) {
             const data = await response.json();
-            const tasks = data.tasks || [];
+            const tasks: Task[] = data.tasks || [];
             
             // Calculate urgent notifications (overdue + due today + urgent priority)
-            const urgentCount = tasks.filter((task: any) => {
+            const urgentCount = tasks.filter((task: Task) => {
               if (task.status === 'DONE') return false;
               
               const dueDate = task.dueDate ? new Date(task.dueDate) : null;
@@ -158,4 +171,4 @@ export default function Navigation() {
       </ul>
     </nav>
   );
-}          
+}   
