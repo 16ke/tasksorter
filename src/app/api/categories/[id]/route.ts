@@ -26,12 +26,19 @@ interface ErrorResponse {
 }
 
 // Type Guards
-function isSessionUser(user: any): user is SessionUser {
-  return user && typeof user.id === 'string' && typeof user.email === 'string';
+function isSessionUser(user: unknown): user is SessionUser {
+  return (
+    typeof user === 'object' &&
+    user !== null &&
+    'id' in user &&
+    'email' in user &&
+    typeof (user as SessionUser).id === 'string' &&
+    typeof (user as SessionUser).email === 'string'
+  );
 }
 
 // Helper function to generate ETag
-function generateETag(data: any): string {
+function generateETag(data: unknown): string {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
 
@@ -54,7 +61,7 @@ export async function GET(
       where: {
         id: categoryId,
         user: {
-          email: session.user.email || undefined // FIX: Added || undefined
+          email: session.user.email || undefined
         }
       },
       select: {
@@ -134,12 +141,12 @@ export async function PUT(
     }
 
     // Verify the category belongs to the user and update
-    const updatedCategory = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const updatedCategory = await prisma.$transaction(async (tx) => {
       const category = await tx.category.findFirst({
         where: {
           id: categoryId,
           user: {
-            email: session.user.email || undefined // FIX: Added || undefined
+            email: session.user.email || undefined
           }
         }
       });
@@ -211,12 +218,12 @@ export async function DELETE(
     const categoryId = params.id;
 
     // Verify the category belongs to the user and delete with transaction
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await prisma.$transaction(async (tx) => {
       const category = await tx.category.findFirst({
         where: {
           id: categoryId,
           user: {
-            email: session.user.email || undefined // FIX: Added || undefined
+            email: session.user.email || undefined
           }
         }
       });
