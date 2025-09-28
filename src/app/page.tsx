@@ -216,7 +216,7 @@ export default async function Home() {
             Vezir
           </h1>
           <p className="mt-2 text-muted text-lg font-body">
-            Your sagacious task management advisor
+            Your sagacious task manager
           </p>
         </div>
         

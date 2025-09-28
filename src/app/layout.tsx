@@ -18,7 +18,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Vezir - Task Manager Advisor",
+  title: "Vezir - Task Manager App",
   description: "A task management application that serves you faithfully",
   icons: {
     icon: '/vezir-favicon.svg',
