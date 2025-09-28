@@ -5,8 +5,39 @@ import { prisma } from "@/lib/prisma";
 import { Task } from "@/types/task";
 import LargeLogo from "@/components/LargeLogo";
 
+interface PrismaTask {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string | null;
+  dueDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  categories: {
+    category: {
+      id: string;
+      name: string;
+      color: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      userId: string;
+    };
+  }[];
+}
+
+// Type guards for status and priority
+function isValidStatus(status: string): status is 'TODO' | 'IN_PROGRESS' | 'DONE' {
+  return ['TODO', 'IN_PROGRESS', 'DONE'].includes(status);
+}
+
+function isValidPriority(priority: string): priority is 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' {
+  return ['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(priority);
+}
+
 // Server component to fetch task data for notifications
-async function getTaskData(userId: string) {
+async function getTaskData(userId: string): Promise<Task[]> {
   const tasks = await prisma.task.findMany({
     where: { userId },
     include: {
@@ -20,10 +51,36 @@ async function getTaskData(userId: string) {
   });
 
   // Transform the data to match frontend expectations
-  return tasks.map((task: any) => ({
-    ...task,
-    categories: task.categories.map((tc: any) => tc.category)
-  })) as Task[];
+  return tasks.map((task: PrismaTask) => {
+    // Validate and transform status
+    const validStatus = isValidStatus(task.status) ? task.status : 'TODO';
+    
+    // Validate and transform priority
+    const validPriority = task.priority && isValidPriority(task.priority) 
+      ? task.priority 
+      : 'MEDIUM';
+
+    // Transform category colors (handle null)
+    const categories = task.categories.map((tc) => ({
+      ...tc.category,
+      color: tc.category.color || '#6B7280', // Default gray color
+      createdAt: tc.category.createdAt.toISOString(),
+      updatedAt: tc.category.updatedAt.toISOString(),
+    }));
+
+    return {
+      id: task.id,
+      title: task.title,
+      description: task.description || undefined,
+      status: validStatus,
+      priority: validPriority,
+      dueDate: task.dueDate ? task.dueDate.toISOString() : undefined,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+      userId: task.userId,
+      categories
+    };
+  });
 }
 
 // Utility function for due date calculations (server-side compatible)
