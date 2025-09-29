@@ -1,13 +1,50 @@
 // src/lib/auth.ts 
 // This file configures NextAuth to use our database and defines how users can log in.
 
-import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
-export const authOptions: NextAuthOptions = {
+interface Credentials {
+  email?: string;
+  password?: string;
+}
+
+interface JWT {
+  id?: string;
+  sub?: string;
+  [key: string]: unknown;
+}
+
+interface User {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+}
+
+interface Session {
+  user: {
+    id?: string;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+  };
+  expires: string;
+}
+
+interface JWTParams {
+  token: JWT;
+  user?: User;
+}
+
+interface SessionParams {
+  session: Session;
+  token: JWT;
+}
+
+// For NextAuth v4, we use inline configuration without explicit types
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   
   providers: [
@@ -17,7 +54,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials: Credentials | undefined) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -51,7 +88,7 @@ export const authOptions: NextAuthOptions = {
   ],
   
   session: {
-    strategy: "jwt"
+    strategy: "jwt" as const
   },
   
   pages: {
@@ -61,16 +98,16 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: JWTParams) {
       if (user) {
         token.id = user.id;
       }
       return token;
     },
     
-    async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+    async session({ session, token }: SessionParams) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       return session;
     }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from "next-auth/next";  // Changed import
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
 
 // TypeScript Interfaces
 interface SessionUser {
@@ -146,7 +145,7 @@ export async function PUT(
         where: {
           id: categoryId,
           user: {
-            email: session.user.email || undefined
+            email: session!.user!.email || undefined
           }
         }
       });
@@ -223,7 +222,7 @@ export async function DELETE(
         where: {
           id: categoryId,
           user: {
-            email: session.user.email || undefined
+            email: session!.user!.email || undefined
           }
         }
       });
