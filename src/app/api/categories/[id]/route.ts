@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";  // Changed import
+import { getServerSession } from "next-auth/next";
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-// TypeScript Interfaces
 interface SessionUser {
   id: string;
   email: string;
@@ -24,7 +23,6 @@ interface ErrorResponse {
   details?: string;
 }
 
-// Type Guards
 function isSessionUser(user: unknown): user is SessionUser {
   return (
     typeof user === 'object' &&
@@ -36,7 +34,6 @@ function isSessionUser(user: unknown): user is SessionUser {
   );
 }
 
-// Helper function to generate ETag
 function generateETag(data: unknown): string {
   return Buffer.from(JSON.stringify(data)).toString('base64');
 }
@@ -44,24 +41,20 @@ function generateETag(data: unknown): string {
 // GET - Fetch single category with task count
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse<CategoryResponse | ErrorResponse>> {
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const session = await getServerSession(authOptions);
+    const { id: categoryId } = await params;
+    const session = await getServerSession(authOptions as any);
     
     if (!session?.user || !isSessionUser(session.user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const categoryId = params.id;
-
-    // Fetch category with task count
     const category = await prisma.category.findFirst({
       where: {
         id: categoryId,
-        user: {
-          email: session.user.email || undefined
-        }
+        user: { email: session.user.email || undefined }
       },
       select: {
         id: true,
@@ -69,11 +62,7 @@ export async function GET(
         color: true,
         createdAt: true,
         updatedAt: true,
-        tasks: {
-          select: {
-            id: true
-          }
-        }
+        tasks: { select: { id: true } }
       }
     });
 
@@ -81,7 +70,6 @@ export async function GET(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
 
-    // Transform data with task count
     const categoryResponse: CategoryResponse = {
       id: category.id,
       name: category.name,
@@ -91,25 +79,20 @@ export async function GET(
       updatedAt: category.updatedAt
     };
 
-    // ETag for caching
     const etag = generateETag(categoryResponse);
-    const requestETag = request.headers.get('If-None-Match');
-
-    if (requestETag === etag) {
+    if (request.headers.get('If-None-Match') === etag) {
       return new NextResponse(null, { status: 304 });
     }
 
     const response = NextResponse.json(categoryResponse);
     response.headers.set('ETag', etag);
     response.headers.set('Cache-Control', 'private, max-age=300, stale-while-revalidate=60');
-    
     return response;
 
   } catch (error) {
     console.error('Error fetching category:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: 'Internal server error', details: errorMessage },
+      { error: 'Internal server error' }, 
       { status: 500 }
     );
   }
@@ -118,41 +101,35 @@ export async function GET(
 // PUT - Update category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse<CategoryResponse | ErrorResponse>> {
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const session = await getServerSession(authOptions);
+    const { id: categoryId } = await params;
+    const session = await getServerSession(authOptions as any);
     
     if (!session?.user || !isSessionUser(session.user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const categoryId = params.id;
     const body = await request.json();
 
-    // Validate request body
-    if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
+    if (!body.name?.trim()) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
 
-    if (!body.color || typeof body.color !== 'string') {
+    if (!body.color) {
       return NextResponse.json({ error: 'Category color is required' }, { status: 400 });
     }
 
-    // Verify the category belongs to the user and update
     const updatedCategory = await prisma.$transaction(async (tx) => {
       const category = await tx.category.findFirst({
         where: {
           id: categoryId,
-          user: {
-            email: session!.user!.email || undefined
-          }
+          user: { email: session!.user!.email || undefined }
         }
       });
 
-      if (!category) {
-        throw new Error('Category not found');
-      }
+      if (!category) throw new Error('Category not found');
 
       return await tx.category.update({
         where: { id: categoryId },
@@ -166,16 +143,11 @@ export async function PUT(
           color: true,
           createdAt: true,
           updatedAt: true,
-          tasks: {
-            select: {
-              id: true
-            }
-          }
+          tasks: { select: { id: true } }
         }
       });
     });
 
-    // Transform response
     const categoryResponse: CategoryResponse = {
       id: updatedCategory.id,
       name: updatedCategory.name,
@@ -194,9 +166,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
 
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: 'Internal server error', details: errorMessage },
+      { error: 'Internal server error' }, 
       { status: 500 }
     );
   }
@@ -205,44 +176,35 @@ export async function PUT(
 // DELETE - Remove category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse<{ message: string } | ErrorResponse>> {
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const session = await getServerSession(authOptions);
+    const { id: categoryId } = await params;
+    const session = await getServerSession(authOptions as any);
     
     if (!session?.user || !isSessionUser(session.user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const categoryId = params.id;
-
-    // Verify the category belongs to the user and delete with transaction
     await prisma.$transaction(async (tx) => {
       const category = await tx.category.findFirst({
         where: {
           id: categoryId,
-          user: {
-            email: session!.user!.email || undefined
-          }
+          user: { email: session!.user!.email || undefined }
         }
       });
 
-      if (!category) {
-        throw new Error('Category not found');
-      }
+      if (!category) throw new Error('Category not found');
 
-      // Check if category has tasks
       const taskCount = await tx.taskCategory.count({
-        where: { categoryId: categoryId }
+        where: { categoryId }
       });
 
       if (taskCount > 0) {
         throw new Error('Cannot delete category with associated tasks');
       }
 
-      await tx.category.delete({
-        where: { id: categoryId }
-      });
+      await tx.category.delete({ where: { id: categoryId } });
     });
 
     return NextResponse.json({ message: 'Category deleted successfully' });
@@ -254,14 +216,13 @@ export async function DELETE(
       if (error.message === 'Category not found') {
         return NextResponse.json({ error: 'Category not found' }, { status: 404 });
       }
-      if (error.message === 'Cannot delete category with associated tasks') {
+      if (error.message.includes('associated tasks')) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
     }
 
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: 'Internal server error', details: errorMessage },
+      { error: 'Internal server error' }, 
       { status: 500 }
     );
   }
