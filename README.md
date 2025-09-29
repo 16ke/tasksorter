@@ -28,7 +28,7 @@ A modern task management app with authentication, categories, and smart notifica
 - **Due Date Notifications** - Smart alerts for overdue, today, and upcoming tasks
 - **Data Export** - Export tasks to CSV and JSON formats
 - **Dark/Light Mode** - Seamless theme switching
-- **Responsive Design** - Works perfectly on desktop and mobile
+- **Desktop Optimized** - Professional interface designed for desktop use
 
 ## 🛠️ Tech Stack
 
